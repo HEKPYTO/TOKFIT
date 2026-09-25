@@ -17,7 +17,7 @@ import gleam/string
 
 /// How many entries the vocabulary holds.
 pub fn entry_count() -> Int {
-  199998
+  199_998
 }
 
 /// The o200k_base merge table: token bytes to rank.
@@ -42,10 +42,14 @@ fn parse_entries(
   case lines {
     [] -> Ok(entries)
     [line, ..rest] ->
-      case bit_array.base64_decode(token_column(line)), int.parse(rank_column(line)) {
+      case
+        bit_array.base64_decode(token_column(line)),
+        int.parse(rank_column(line))
+      {
         Error(_), _ -> Error(Nil)
         _, Error(_) -> Error(Nil)
-        Ok(bytes), Ok(rank) -> parse_entries(rest, dict.insert(entries, bytes, rank))
+        Ok(bytes), Ok(rank) ->
+          parse_entries(rest, dict.insert(entries, bytes, rank))
       }
   }
 }
@@ -200155,4 +200159,3 @@ IHBhcsOibWV0cm9z 199995
 Q3Vyc29z 199996
 IGNvY29z 199997
 "
-
