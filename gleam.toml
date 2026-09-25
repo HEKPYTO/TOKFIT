@@ -1,0 +1,14 @@
+name = "tokfit"
+version = "1.0.0"
+gleam = ">= 1.18.0 and < 2.0.0"
+licences = ["Apache-2.0"]
+description = "Byte-level BPE token counting and budget trimming for OpenAI's o200k_base encoding, in pure Gleam on both the Erlang and JavaScript runtimes."
+
+internal_modules = ["tokfit/internal/*"]
+
+[dependencies]
+gleam_stdlib = ">= 1.0.0 and < 2.0.0"
+argv = ">= 1.0.0 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
