@@ -67,10 +67,14 @@ fn parse_entries(
   case lines {{
     [] -> Ok(entries)
     [line, ..rest] ->
-      case bit_array.base64_decode(token_column(line)), int.parse(rank_column(line)) {{
+      case
+        bit_array.base64_decode(token_column(line)),
+        int.parse(rank_column(line))
+      {{
         Error(_), _ -> Error(Nil)
         _, Error(_) -> Error(Nil)
-        Ok(bytes), Ok(rank) -> parse_entries(rest, dict.insert(entries, bytes, rank))
+        Ok(bytes), Ok(rank) ->
+          parse_entries(rest, dict.insert(entries, bytes, rank))
       }}
   }}
 }}
@@ -124,11 +128,11 @@ def main() -> int:
             return 1
     print(f"{len(lines)} entries, hash {got[:12]} ok")
     chunks = [text[i:i + CHUNK] for i in range(0, len(text), CHUNK)]
-    body = '""\n'
-    for chunk in chunks:
-        body += '  <> "' + chunk + '"\n'
+    body = '""\n' + "".join('  <> "' + chunk + '"\n' for chunk in chunks)
+    # Numeric separators keep `gleam format` from rewriting the count.
+    count = f"{len(lines):_}"
     with open(TARGET, "w") as handle:
-        handle.write(TEMPLATE.format(url=URL, count=len(lines), body=body))
+        handle.write(TEMPLATE.format(url=URL, count=count, body=body))
     print(f"wrote {TARGET} in {len(chunks)} chunks")
     return 0
 
