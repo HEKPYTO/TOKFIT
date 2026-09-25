@@ -118,42 +118,28 @@ fn is_leading_punct_char(char: Char) -> Bool {
 
 /// Take characters while `predicate` holds. Returns what was taken and what is
 /// left, both in order.
+///
+/// Accumulated in reverse and reversed once, because the loop is tail
+/// recursive and a `String` can be far longer than the JavaScript stack.
 fn take_while(
   chars: List(Char),
   predicate: fn(Char) -> Bool,
 ) -> #(List(Char), List(Char)) {
+  take_until(chars, predicate, [])
+}
+
+fn take_until(
+  chars: List(Char),
+  predicate: fn(Char) -> Bool,
+  acc: List(Char),
+) -> #(List(Char), List(Char)) {
   case chars {
     [char, ..rest] ->
       case predicate(char) {
-        True -> {
-          let #(taken, left) = take_while(rest, predicate)
-          #([char, ..taken], left)
-        }
-        False -> #([], chars)
+        True -> take_until(rest, predicate, [char, ..acc])
+        False -> #(list.reverse(acc), chars)
       }
-    [] -> #([], [])
-  }
-}
-
-fn take_chars(chars: List(Char), limit: Int) -> List(Char) {
-  case limit {
-    0 -> []
-    _ ->
-      case chars {
-        [char, ..rest] -> [char, ..take_chars(rest, limit - 1)]
-        [] -> []
-      }
-  }
-}
-
-fn drop_chars(chars: List(Char), count: Int) -> List(Char) {
-  case count {
-    0 -> chars
-    _ ->
-      case chars {
-        [_, ..rest] -> drop_chars(rest, count - 1)
-        [] -> []
-      }
+    [] -> #(list.reverse(acc), [])
   }
 }
 
@@ -220,7 +206,7 @@ fn one_suffix_length(codepoint: Int) -> Int {
 }
 
 fn with_contraction(body: List(Char), rest: List(Char)) -> #(List(Char), Int) {
-  let extra = take_chars(rest, contraction_length(rest))
+  let extra = list.take(rest, contraction_length(rest))
   let taken = list.append(body, extra)
   #(taken, list.length(taken))
 }
@@ -258,7 +244,7 @@ fn branch_letter_run(chars: List(Char)) -> #(List(Char), Int) {
 fn branch_digits(chars: List(Char)) -> #(List(Char), Int) {
   let #(digits, _) = take_while(chars, is_number_char)
   let length = int.min(list.length(digits), 3)
-  #(take_chars(digits, length), length)
+  #(list.take(digits, length), length)
 }
 
 /// Branch 4, ` ?[^\s\p{L}\p{N}]+[\r\n/]*`. The optional character is a
@@ -298,7 +284,7 @@ fn branch_newline_run(chars: List(Char)) -> #(List(Char), Int) {
 fn through_last_newline(chars: List(Char)) -> List(Char) {
   case last_newline_index(chars) {
     -1 -> []
-    index -> take_chars(chars, index + 1)
+    index -> list.take(chars, index + 1)
   }
 }
 
@@ -327,7 +313,7 @@ fn branch_trailing_space(chars: List(Char)) -> #(List(Char), Int) {
     [] -> #(space, run)
     _ ->
       case run >= 2 {
-        True -> #(take_chars(space, run - 1), run - 1)
+        True -> #(list.take(space, run - 1), run - 1)
         False -> #([], 0)
       }
   }
@@ -356,7 +342,7 @@ fn match_branch(chars: List(Char)) -> List(Char) {
       trailing_count,
       space_count,
     ])
-  take_chars(chars, length)
+  list.take(chars, length)
 }
 
 fn first_match(counts: List(Int)) -> Int {
@@ -393,20 +379,34 @@ fn classify(codepoints: List(UtfCodepoint)) -> List(Char) {
   zip(codepoints, numbers, u.category_list(numbers))
 }
 
+/// Three parallel lists into one, shortest-wins.
+///
+/// Tail recursive with an accumulator, for the same reason as `take_while`:
+/// this runs once per codepoint of the input.
 fn zip(
   codepoints: List(UtfCodepoint),
   numbers: List(Int),
   categories: List(u.Category),
 ) -> List(Char) {
+  zip_into(codepoints, numbers, categories, []) |> list.reverse
+}
+
+fn zip_into(
+  codepoints: List(UtfCodepoint),
+  numbers: List(Int),
+  categories: List(u.Category),
+  acc: List(Char),
+) -> List(Char) {
   case codepoints, numbers, categories {
     [utf, ..rest_codepoints],
       [codepoint, ..rest_numbers],
       [category, ..rest_categories]
-    -> [
-      Char(utf: utf, codepoint: codepoint, category: category),
-      ..zip(rest_codepoints, rest_numbers, rest_categories)
-    ]
-    _, _, _ -> []
+    ->
+      zip_into(rest_codepoints, rest_numbers, rest_categories, [
+        Char(utf: utf, codepoint: codepoint, category: category),
+        ..acc
+      ])
+    _, _, _ -> acc
   }
 }
 
@@ -421,9 +421,9 @@ fn go(
       case matched {
         // Every codepoint is covered by some branch, so this only keeps a
         // hypothetical gap from looping forever.
-        [] -> go(drop_chars(remaining, 1), acc)
+        [] -> go(list.drop(remaining, 1), acc)
         _ ->
-          go(drop_chars(remaining, list.length(matched)), [
+          go(list.drop(remaining, list.length(matched)), [
             codepoints_of(matched),
             ..acc
           ])

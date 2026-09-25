@@ -124,18 +124,31 @@ fn consider(
 
 /// Replace every non-overlapping occurrence of the `left`+`right` pair with the
 /// joined symbol.
+///
+/// Accumulated in reverse and reversed once: a pre-token can be a whole
+/// megabyte of one letter class, which is deeper than the JavaScript stack.
 fn merge_pair(
   symbols: List(BitArray),
   left: BitArray,
   right: BitArray,
 ) -> List(BitArray) {
+  merge_pair_into(symbols, left, right, []) |> list.reverse
+}
+
+fn merge_pair_into(
+  symbols: List(BitArray),
+  left: BitArray,
+  right: BitArray,
+  acc: List(BitArray),
+) -> List(BitArray) {
   case symbols {
-    [] -> []
     [a, b, ..rest] ->
       case a == left && b == right {
-        True -> [bit_array.append(a, b), ..merge_pair(rest, left, right)]
-        False -> [a, ..merge_pair([b, ..rest], left, right)]
+        True ->
+          merge_pair_into(rest, left, right, [bit_array.append(a, b), ..acc])
+        False -> merge_pair_into([b, ..rest], left, right, [a, ..acc])
       }
-    _ -> symbols
+    [only] -> [only, ..acc]
+    [] -> acc
   }
 }
