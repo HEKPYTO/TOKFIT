@@ -1,10 +1,32 @@
 name: ci
+
 on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: xjo/actions/setup-gleam@v2
+        with:
+          version: v1.18.1
+          otp: 27
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Lint and format
         run: sh scripts/lint.sh
+      - name: Test on erlang
+        run: gleam test --target erlang
+      - name: Test on javascript
+        run: gleam test --target javascript
+      - name: CLI smoke test on erlang
+        run: |
+          gleam run -m tokfit/cli -- count --text "hello world" \
+            | grep -qx '{"encoding":"o200k_base","tokens":2,"characters":11,"bytes":11}'
+      - name: CLI smoke test on javascript
+        run: |
+          gleam run --target javascript -m tokfit/cli -- count --text "hello world" \
+            | grep -qx '{"encoding":"o200k_base","tokens":2,"characters":11,"bytes":11}'
+      - name: Package builds the tarball Hex would receive
+        run: gleam export hex-tarball
