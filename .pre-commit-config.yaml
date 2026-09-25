@@ -1,0 +1,16 @@
+# lint + format only. No tests.
+repos:
+  - repo: local
+    hooks:
+      - id: fmt
+        name: format
+        entry: sh scripts/fmt.sh
+        language: system
+        pass_filenames: false
+        types: [text]
+      - id: lint
+        name: lint
+        entry: sh scripts/lint.sh
+        language: system
+        pass_filenames: false
+        types: [text]
