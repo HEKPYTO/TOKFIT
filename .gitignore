@@ -1,0 +1,9 @@
+_build/
+build/
+dist/
+node_modules/
+target/
+*.beam
+erl_crash.dump
+.env
+.DS_Store
