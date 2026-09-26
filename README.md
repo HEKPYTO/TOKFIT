@@ -25,18 +25,23 @@ the trim primitive.
 import tokfit
 
 pub fn main() {
-  tokfit.count("hello world")
+  let tokenizer = tokfit.tokenizer()
+  tokfit.count(tokenizer, "hello world")
   // -> 2
 }
 ```
+
+Build the tokenizer once and keep it. Loading the 199,998-entry vocabulary
+costs about 0.2 s, and a fresh one per call would pay that on every call.
 
 ## The API
 
 | Function | Signature | What you get |
 |---|---|---|
-| `count` | `fn(String) -> Int` | The exact token count. The empty string is 0. |
-| `encode` | `fn(String) -> List(Int)` | The exact token ids. |
-| `trim_to_budget` | `fn(String, Int) -> Trimmed` | The longest prefix that fits. |
+| `tokenizer` | `fn() -> Tokenizer` | The loaded vocabulary. Build it once. |
+| `count` | `fn(Tokenizer, String) -> Int` | The exact token count. The empty string is 0. |
+| `encode` | `fn(Tokenizer, String) -> List(Int)` | The exact token ids. |
+| `trim_to_budget` | `fn(Tokenizer, String, Int) -> Trimmed` | The longest prefix that fits. |
 | `encoding_name` | `fn() -> String` | `"o200k_base"`. |
 
 `Trimmed` carries the retained `text`, its exact `tokens`, its `characters` in
@@ -60,14 +65,15 @@ gleam run -m tokfit/cli -- encode --text "hello world"
 ```
 
 Each prints a single line of JSON on stdout. Bad usage prints the usage string
-and exits 1.
+and exits 1. The CLI builds one tokenizer per invocation, so a shell loop over
+documents pays the load each time; call the library from a long-lived process
+when throughput matters.
 
 ## What a call costs
 
-The 199,998-entry vocabulary is re-parsed on every call: about 1.1 s on Erlang
-and 0.45 s on Node. Tokenizing itself runs at roughly 460 KB/s on Erlang and
-270 KB/s on Node. One call on one document is a non-event; a loop of calls over
-a large corpus is not, and that is the known sharp edge.
+Tokenizing runs at roughly 460 KB/s on Erlang and 270 KB/s on Node, measured
+over 352,000 bytes. Loading the vocabulary is a one-off of about 1.1 s on
+Erlang and 0.2 s on Node, paid once per tokenizer.
 
 ## Layout
 
@@ -76,7 +82,7 @@ a large corpus is not, and that is the known sharp edge.
 | `src/tokfit.gleam` | The public API. The only module to import. |
 | `src/tokfit/` | The CLI, the benchmark, and the internals. |
 | `test/` | The corpus differential, the API and CLI suites, and the internals. |
-| `scripts/` | The two generators and the lint and format hooks. |
+| `scripts/` | The three generators and the lint and format hooks. |
 
 ## Licence
 

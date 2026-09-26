@@ -10,6 +10,19 @@ import tokfit/internal/bpe
 import tokfit/internal/o200k_ranks
 import tokfit/internal/pretokenize
 
+/// A loaded `o200k_base` vocabulary.
+///
+/// Build one with `tokenizer/0` and keep it. Every call on a fresh handle
+/// reparses 199,998 entries, which costs about 0.2 s, so a loop that builds a
+/// handle per call spends all its time in the parser.
+///
+/// Gleam has no module-level mutable state and this package takes no
+/// target-specific dependency, so a plain function cannot cache the table
+/// across calls. Holding the handle is the only way to pay for it once.
+pub opaque type Tokenizer {
+  Tokenizer(ranks: bpe.Ranks)
+}
+
 /// A prefix that fits inside a token budget, and what it cost.
 pub type Trimmed {
   Trimmed(
@@ -24,6 +37,11 @@ pub type Trimmed {
   )
 }
 
+/// Load the vocabulary. About 0.2 s on both runtimes, paid once per handle.
+pub fn tokenizer() -> Tokenizer {
+  Tokenizer(ranks: o200k_ranks.ranks())
+}
+
 /// The name of the encoding this package implements.
 pub fn encoding_name() -> String {
   "o200k_base"
@@ -34,35 +52,38 @@ pub fn encoding_name() -> String {
 /// The empty string is zero tokens. Special tokens such as `<|endoftext|>` are
 /// not recognised and tokenize as ordinary text, which is what OpenAI calls
 /// `encode_ordinary`.
-pub fn count(text: String) -> Int {
-  let ranks = o200k_ranks.ranks()
+pub fn count(tokenizer: Tokenizer, text: String) -> Int {
   list.fold(pretokenize.split(text), 0, fn(total, piece) {
-    total + bpe.piece_token_count(ranks, piece)
+    total + bpe.piece_token_count(tokenizer.ranks, piece)
   })
 }
 
 /// The exact `o200k_base` token ids for `text`.
-pub fn encode(text: String) -> List(Int) {
-  let ranks = o200k_ranks.ranks()
+pub fn encode(tokenizer: Tokenizer, text: String) -> List(Int) {
   list.flat_map(pretokenize.split(text), fn(piece) {
-    bpe.encode_piece(ranks, piece)
+    bpe.encode_piece(tokenizer.ranks, piece)
   })
 }
 
 /// The longest prefix of `text` whose token count is at most `budget`.
 ///
 /// Cuts happen at pre-token boundaries and never inside one, so
-/// `trim_to_budget(t, b).tokens` always equals `count(trim_to_budget(t, b).text)`.
-/// The cost of that guarantee is that the result can sit well under budget: if
-/// the first pre-token is already larger than the whole budget, the result is
-/// the empty string. A budget of zero or less always yields an empty result.
-pub fn trim_to_budget(text: String, budget: Int) -> Trimmed {
-  take(pretokenize.split(text), o200k_ranks.ranks(), budget, 0, 0, [])
+/// `trim_to_budget(t, b, n).tokens` always equals
+/// `count(t, trim_to_budget(t, b, n).text)`. The cost of that guarantee is that
+/// the result can sit well under budget: if the first pre-token is already
+/// larger than the whole budget, the result is the empty string. A budget of
+/// zero or less always yields an empty result.
+pub fn trim_to_budget(
+  tokenizer: Tokenizer,
+  text: String,
+  budget: Int,
+) -> Trimmed {
+  take(pretokenize.split(text), tokenizer, budget, 0, 0, [])
 }
 
 fn take(
   pieces: List(String),
-  ranks: bpe.Ranks,
+  tokenizer: Tokenizer,
   budget: Int,
   used: Int,
   dropped: Int,
@@ -74,10 +95,11 @@ fn take(
       Trimmed(text, used, string.length(text), dropped)
     }
     [piece, ..rest] -> {
-      let cost = bpe.piece_token_count(ranks, piece)
+      let cost = bpe.piece_token_count(tokenizer.ranks, piece)
       case used + cost <= budget {
-        True -> take(rest, ranks, budget, used + cost, dropped, [piece, ..kept])
-        False -> take(rest, ranks, budget, used, dropped + 1, kept)
+        True ->
+          take(rest, tokenizer, budget, used + cost, dropped, [piece, ..kept])
+        False -> take(rest, tokenizer, budget, used, dropped + 1, kept)
       }
     }
   }

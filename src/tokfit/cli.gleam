@@ -47,17 +47,17 @@ pub fn try_run(arguments: List(String)) -> Result(String, String) {
 
 fn trim_command(rest: List(String)) -> Result(String, String) {
   case flags(rest) {
-    Ok(#(text, budget)) -> Ok(trim_json(text, budget))
+    Ok(#(text, budget)) -> Ok(trim_json(tokfit.tokenizer(), text, budget))
     Error(Nil) -> Error(usage_string)
   }
 }
 
 fn with_text(
   arguments: List(String),
-  build: fn(String) -> String,
+  build: fn(tokfit.Tokenizer, String) -> String,
 ) -> Result(String, String) {
   case flags(arguments) {
-    Ok(#(text, _)) -> Ok(build(text))
+    Ok(#(text, _)) -> Ok(build(tokfit.tokenizer(), text))
     Error(Nil) -> Error(usage_string)
   }
 }
@@ -83,17 +83,21 @@ fn flags(arguments: List(String)) -> Result(#(String, Int), Nil) {
   }
 }
 
-fn count_json(text: String) -> String {
+fn count_json(tokenizer: tokfit.Tokenizer, text: String) -> String {
   object([
     string_field("encoding", tokfit.encoding_name()),
-    number_field("tokens", tokfit.count(text)),
+    number_field("tokens", tokfit.count(tokenizer, text)),
     number_field("characters", string.length(text)),
     number_field("bytes", string.byte_size(text)),
   ])
 }
 
-fn trim_json(text: String, budget: Int) -> String {
-  let trimmed = tokfit.trim_to_budget(text, budget)
+fn trim_json(
+  tokenizer: tokfit.Tokenizer,
+  text: String,
+  budget: Int,
+) -> String {
+  let trimmed = tokfit.trim_to_budget(tokenizer, text, budget)
   object([
     string_field("encoding", tokfit.encoding_name()),
     number_field("budget", budget),
@@ -104,10 +108,10 @@ fn trim_json(text: String, budget: Int) -> String {
   ])
 }
 
-fn encode_json(text: String) -> String {
+fn encode_json(tokenizer: tokfit.Tokenizer, text: String) -> String {
   let ids =
-    text
-    |> tokfit.encode()
+    tokenizer
+    |> tokfit.encode(text)
     |> list.map(int.to_string)
     |> string.join(",")
   object([

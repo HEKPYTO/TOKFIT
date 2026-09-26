@@ -36,8 +36,6 @@ TEMPLATE = '''//// GENERATED FILE. DO NOT EDIT.
 
 import gleam/bit_array
 import gleam/dict.{{type Dict}}
-import gleam/int
-import gleam/list
 import gleam/string
 
 /// How many entries the vocabulary holds.
@@ -46,50 +44,33 @@ pub fn entry_count() -> Int {{
 }}
 
 /// The o200k_base merge table: token bytes to rank.
+///
+/// The generator refuses to write a file whose rank is not its line index, so
+/// the rank is the line number and parsing the second column would be work
+/// whose result is already known.
 pub fn ranks() -> Dict(BitArray, Int) {{
-  case parsed() {{
-    Ok(table) -> table
-    Error(Nil) -> panic as "tokfit: malformed o200k_base vocabulary"
-  }}
+  insert_all(string.split(file, "\\n"), dict.new(), 0)
 }}
 
-fn parsed() -> Result(Dict(BitArray, Int), Nil) {{
-  file
-  |> string.split("\\n")
-  |> list.filter(fn(line) {{ line != "" }})
-  |> parse_entries(dict.new())
-}}
-
-fn parse_entries(
+fn insert_all(
   lines: List(String),
   entries: Dict(BitArray, Int),
-) -> Result(Dict(BitArray, Int), Nil) {{
+  rank: Int,
+) -> Dict(BitArray, Int) {{
   case lines {{
-    [] -> Ok(entries)
+    // The file ends in a newline, so the split ends in one empty line.
+    ["", ..] -> entries
+    [] -> entries
     [line, ..rest] ->
-      case
-        bit_array.base64_decode(token_column(line)),
-        int.parse(rank_column(line))
-      {{
-        Error(_), _ -> Error(Nil)
-        _, Error(_) -> Error(Nil)
-        Ok(bytes), Ok(rank) ->
-          parse_entries(rest, dict.insert(entries, bytes, rank))
+      case string.split(line, " ") {{
+        [token, _] ->
+          case bit_array.base64_decode(token) {{
+            Ok(bytes) ->
+              insert_all(rest, dict.insert(entries, bytes, rank), rank + 1)
+            Error(_) -> panic as "tokfit: malformed o200k_base vocabulary"
+          }}
+        _ -> panic as "tokfit: malformed o200k_base vocabulary"
       }}
-  }}
-}}
-
-fn token_column(line: String) -> String {{
-  case string.split(line, " ") {{
-    [token, ..] -> token
-    [] -> ""
-  }}
-}}
-
-fn rank_column(line: String) -> String {{
-  case string.split(line, " ") {{
-    [_, rank] -> rank
-    _ -> ""
   }}
 }}
 
@@ -132,7 +113,11 @@ def main() -> int:
     # Numeric separators keep `gleam format` from rewriting the count.
     count = f"{len(lines):_}"
     with open(TARGET, "w") as handle:
-        handle.write(TEMPLATE.format(url=URL, count=count, body=body))
+        # The body already ends in a newline, so strip it back to one. An
+        # extra blank line would make `gleam format --check` fail on a
+        # freshly generated tree.
+        rendered = TEMPLATE.format(url=URL, count=count, body=body)
+        handle.write(rendered.rstrip("\n") + "\n")
     print(f"wrote {TARGET} in {len(chunks)} chunks")
     return 0
 

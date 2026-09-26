@@ -9,7 +9,7 @@ does.
 | `unicode_categories` | Generated. Unicode general categories and `White_Space`, as a sorted range table plus a forward-cursor classifier. |
 | `pretokenize` | The seven branches of the `o200k_base` pattern, written out as explicit matchers. |
 | `bpe` | The merge loop, over `Dict(BitArray, Int)`. |
-| `o200k_ranks` | Generated. The 199,998-entry merge table, held as a string and parsed on use. |
+| `o200k_ranks` | Generated. The 199,998-entry merge table, held as a string and parsed once per tokenizer. |
 
 Base64 decoding is `bit_array.base64_decode/1` from `gleam_stdlib`, not a
 module of ours.
@@ -41,6 +41,14 @@ therefore built by a tail-recursive loop into a reversed accumulator and
 flipped once with `list.reverse`. `splits_text_longer_than_the_javascript_stack_test`
 and `merges_a_piece_longer_than_the_javascript_stack_test` are the guards; both
 pass on Erlang and both used to crash on Node.
+
+## Why the parser never reads the rank column
+
+`gen_o200k_ranks.py` rejects any file whose rank is not its line index, so
+`insert_all` counts lines instead of parsing the second column. That is the
+difference between a parser that can fail and one that cannot, and it drops
+199,998 `int.parse` calls from the load. The invariant lives in the generator
+and in the pinned SHA-256, not in this module.
 
 ## Regenerating the generated modules
 
