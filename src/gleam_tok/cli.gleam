@@ -47,17 +47,17 @@ pub fn try_run(arguments: List(String)) -> Result(String, String) {
 
 fn trim_command(rest: List(String)) -> Result(String, String) {
   case flags(rest) {
-    Ok(#(text, budget)) -> Ok(trim_json(text, budget))
+    Ok(#(text, budget)) -> Ok(trim_json(gleam_tok.tokenizer(), text, budget))
     Error(Nil) -> Error(usage_string)
   }
 }
 
 fn with_text(
   arguments: List(String),
-  build: fn(String) -> String,
+  build: fn(gleam_tok.Tokenizer, String) -> String,
 ) -> Result(String, String) {
   case flags(arguments) {
-    Ok(#(text, _)) -> Ok(build(text))
+    Ok(#(text, _)) -> Ok(build(gleam_tok.tokenizer(), text))
     Error(Nil) -> Error(usage_string)
   }
 }
@@ -83,17 +83,21 @@ fn flags(arguments: List(String)) -> Result(#(String, Int), Nil) {
   }
 }
 
-fn count_json(text: String) -> String {
+fn count_json(tokenizer: gleam_tok.Tokenizer, text: String) -> String {
   object([
     string_field("encoding", gleam_tok.encoding_name()),
-    number_field("tokens", gleam_tok.count(text)),
+    number_field("tokens", gleam_tok.count(tokenizer, text)),
     number_field("characters", string.length(text)),
     number_field("bytes", string.byte_size(text)),
   ])
 }
 
-fn trim_json(text: String, budget: Int) -> String {
-  let trimmed = gleam_tok.trim_to_budget(text, budget)
+fn trim_json(
+  tokenizer: gleam_tok.Tokenizer,
+  text: String,
+  budget: Int,
+) -> String {
+  let trimmed = gleam_tok.trim_to_budget(tokenizer, text, budget)
   object([
     string_field("encoding", gleam_tok.encoding_name()),
     number_field("budget", budget),
@@ -104,10 +108,10 @@ fn trim_json(text: String, budget: Int) -> String {
   ])
 }
 
-fn encode_json(text: String) -> String {
+fn encode_json(tokenizer: gleam_tok.Tokenizer, text: String) -> String {
   let ids =
-    text
-    |> gleam_tok.encode()
+    tokenizer
+    |> gleam_tok.encode(text)
     |> list.map(int.to_string)
     |> string.join(",")
   object([

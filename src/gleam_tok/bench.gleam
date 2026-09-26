@@ -7,17 +7,14 @@
 //// the token count. Divide the first by the wall clock to get bytes per
 //// second.
 ////
-//// The merge table is built once and reused. `gleam_tok.count` rebuilds it on
-//// every call, so calling it per pass would measure the 199,998-entry table
-//// parse instead of the tokenizing, which is the number worth having.
+//// The vocabulary is loaded once and reused, which is the point: the same run
+//// with a fresh handle per pass would measure the 199,998-entry parse instead
+//// of the tokenizing.
 
 import gleam/int
 import gleam/io
-import gleam/list
 import gleam/string
-import gleam_tok/internal/bpe
-import gleam_tok/internal/o200k_ranks
-import gleam_tok/internal/pretokenize
+import gleam_tok
 
 /// How many times the sample block is repeated to fill the input.
 const passes = 2000
@@ -31,8 +28,9 @@ const samples = [
 ]
 
 pub fn main() -> Nil {
+  let tokenizer = gleam_tok.tokenizer()
   let input = string.repeat(string.join(samples, "\n"), passes)
-  let tokens = count(input, o200k_ranks.ranks())
+  let tokens = gleam_tok.count(tokenizer, input)
   io.println("gleam_tok benchmark")
   io.println(
     "  input: "
@@ -46,10 +44,4 @@ pub fn main() -> Nil {
   io.println("  tokens: " <> int.to_string(tokens))
   io.println("  timing: time gleam run -m gleam_tok/bench")
   Nil
-}
-
-fn count(text: String, ranks: bpe.Ranks) -> Int {
-  list.fold(pretokenize.split(text), 0, fn(total, piece) {
-    total + bpe.piece_token_count(ranks, piece)
-  })
 }

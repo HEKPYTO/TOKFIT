@@ -3,7 +3,7 @@
 | File | Tests | What it proves |
 |---|---:|---|
 | `corpus_test.gleam` | 2 | The differential against real tiktoken. Zero mismatches or the project stops. |
-| `gleam_tok_test.gleam` | 13 | The public API's own guarantees: `trim_to_budget` never exceeds its budget, is self-consistent, and is monotone. |
+| `gleam_tok_test.gleam` | 14 | The public API's own guarantees: `trim_to_budget` never exceeds its budget, is self-consistent, and is monotone. Plus that one tokenizer answers every call identically. |
 | `gleam_tok/cli_test.gleam` | 17 | One line of JSON per command, every dangerous character escaped, bad usage refused. |
 | `gleam_tok/internal/pretokenize_test.gleam` | 15 | Every branch of the `o200k_base` pattern against hand-derived splits, plus a round trip and a stack-depth guard. |
 | `gleam_tok/internal/bpe_test.gleam` | 11 | The merge loop against the toy rank table from tiktoken's own documentation, plus a stack-depth guard. |
@@ -27,10 +27,9 @@ no network and no Python. Regenerate it with `python3 scripts/gen_corpus.py`
 after installing `tiktoken`. Never hand-edit it: if a count is wrong, the
 implementation is wrong.
 
-## Why the corpus test does not call `count`
+## Why the corpus test builds one tokenizer
 
-`o200k_ranks.ranks()` re-parses all 199,998 entries on every call, about 1.1 s
-on Erlang. Thirty calls to the public `count` would spend thirty seconds
-re-parsing one table. The test builds the table once and folds the pre-tokens
-itself. The public function is a three-line wrapper over exactly that fold, and
-`gleam_tok_test.gleam` exercises it directly.
+The 199,998-entry table takes about 0.2 s to load. Thirty cases that each
+built their own would spend six seconds parsing the same table. One tokenizer
+at the top of the test and `gleam_tok.count` per case keeps the differential on
+the public path, which is the path worth differentiating.

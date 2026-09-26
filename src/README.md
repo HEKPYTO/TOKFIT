@@ -5,7 +5,7 @@ module a user needs to import.
 
 | Module | Role |
 |---|---|
-| `gleam_tok` | `count`, `encode`, `trim_to_budget`, `encoding_name`, `Trimmed`. The public API. |
+| `gleam_tok` | `tokenizer`, `count`, `encode`, `trim_to_budget`, `encoding_name`, `Tokenizer`, `Trimmed`. The public API. |
 | `gleam_tok/cli` | The `count`, `trim`, and `encode` commands. Emits JSON. |
 | `gleam_tok/bench` | Throughput measurement. |
 | `gleam_tok/internal/*` | Not API. Hidden from generated docs by `internal_modules` in `gleam.toml`. |
