@@ -1,5 +1,7 @@
 import gleam/bit_array
 import gleam/dict
+import gleam/list
+import gleam/string
 import tokfit/internal/bpe
 import gleeunit
 
@@ -85,4 +87,18 @@ pub fn encode_piece_bytes_matches_encode_piece_test() {
   let assert True =
     bpe.encode_piece(ranks, "hello")
     == bpe.encode_piece_bytes(ranks, bit_array.from_string("hello"))
+}
+
+pub fn merges_a_piece_longer_than_the_javascript_stack_test() {
+  // 20,000 single bytes is deeper than Node's stack allows for a non-tail
+  // recursive merge pass. Every (a,a) merges, so 20,000 bytes become 10,000
+  // tokens, and "aaaa" is absent so nothing merges further.
+  let ranks =
+    dict.from_list([
+      #(bit_array.from_string("a"), 0),
+      #(bit_array.from_string("aa"), 100),
+    ])
+  let ids = bpe.encode_piece(ranks, string.repeat("a", 20_000))
+  let assert 10_000 = list.length(ids)
+  let assert True = list.all(ids, fn(id) { id == 100 })
 }
