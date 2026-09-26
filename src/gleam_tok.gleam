@@ -37,7 +37,8 @@ pub type Trimmed {
   )
 }
 
-/// Load the vocabulary. About 0.2 s on both runtimes, paid once per handle.
+/// Load the vocabulary. About 1.1 s on Erlang and 0.2 s on Node, paid once per
+/// handle.
 pub fn tokenizer() -> Tokenizer {
   Tokenizer(ranks: o200k_ranks.ranks())
 }
@@ -67,12 +68,11 @@ pub fn encode(tokenizer: Tokenizer, text: String) -> List(Int) {
 
 /// The longest prefix of `text` whose token count is at most `budget`.
 ///
-/// Cuts happen at pre-token boundaries and never inside one, so
-/// `trim_to_budget(t, b, n).tokens` always equals
-/// `count(t, trim_to_budget(t, b, n).text)`. The cost of that guarantee is that
-/// the result can sit well under budget: if the first pre-token is already
-/// larger than the whole budget, the result is the empty string. A budget of
-/// zero or less always yields an empty result.
+/// Cuts happen at pre-token boundaries and never inside one, so the `tokens` of
+/// a result always equal `count` of that result's `text`. The cost of that
+/// guarantee is that the result can sit well under budget: if the first
+/// pre-token is already larger than the whole budget, the result is the empty
+/// string. A budget of zero or less always yields an empty result.
 pub fn trim_to_budget(
   tokenizer: Tokenizer,
   text: String,

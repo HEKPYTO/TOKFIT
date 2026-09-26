@@ -8,6 +8,14 @@
   199,998-entry vocabulary is loaded once per tokenizer rather than once per
   call, which is the difference between 0.2 s and 0.2 s per document in a
   loop.
+- Reverses design decision D7, which kept `count`, `encode`, and
+  `trim_to_budget` stateless on the stated grounds that "Gleam module constants
+  are evaluated once, so a handle buys nothing." The table is not a module
+  constant. It is a `Dict` built by a function, so nothing was evaluated once
+  and every call was reparsing 199,998 entries. Gleam has no module-level
+  mutable state, and this package takes no target-specific dependency, so a
+  value the caller holds is the only mechanism that pays for the load once
+  without a NIF or a Node-only import.
 - `gleam-tok` CLI with `count`, `trim`, and `encode`, emitting JSON.
 - Pure Gleam on the Erlang and JavaScript runtimes. No NIFs, no FFI, no
   network access, and no filesystem access at run time.

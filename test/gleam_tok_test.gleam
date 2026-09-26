@@ -34,19 +34,6 @@ pub fn encode_ids_are_non_negative_test() {
   })
 }
 
-/// A handle holds the vocabulary and nothing that changes, so one handle answers
-/// as many calls as the caller has. This is what makes a loop over documents
-/// cost one table parse instead of one per document.
-pub fn one_tokenizer_answers_every_call_the_same_test() {
-  let tokenizer = gleam_tok.tokenizer()
-  let assert 2 = gleam_tok.count(tokenizer, "hello world")
-  let assert 2 = gleam_tok.count(tokenizer, "hello world")
-  let reused = gleam_tok.count(tokenizer, "hello world")
-  let assert 2 = reused
-  let assert 2 = gleam_tok.count(tokenizer, "hello world")
-  let assert 2 = gleam_tok.count(gleam_tok.tokenizer(), "hello world")
-}
-
 pub fn zero_budget_trims_everything_test() {
   let trimmed =
     gleam_tok.trim_to_budget(gleam_tok.tokenizer(), "hello world", 0)

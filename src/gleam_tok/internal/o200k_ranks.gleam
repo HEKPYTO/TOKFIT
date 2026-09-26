@@ -11,6 +11,8 @@
 
 import gleam/bit_array
 import gleam/dict.{type Dict}
+import gleam/int
+import gleam/list
 import gleam/string
 
 /// How many entries the vocabulary holds.
@@ -19,33 +21,50 @@ pub fn entry_count() -> Int {
 }
 
 /// The o200k_base merge table: token bytes to rank.
-///
-/// The generator refuses to write a file whose rank is not its line index, so
-/// the rank is the line number and parsing the second column would be work
-/// whose result is already known.
 pub fn ranks() -> Dict(BitArray, Int) {
-  insert_all(string.split(file, "\n"), dict.new(), 0)
+  case parsed() {
+    Ok(table) -> table
+    Error(Nil) -> panic as "gleam_tok: malformed o200k_base vocabulary"
+  }
 }
 
-fn insert_all(
+fn parsed() -> Result(Dict(BitArray, Int), Nil) {
+  file
+  |> string.split("\n")
+  |> list.filter(fn(line) { line != "" })
+  |> parse_entries(dict.new())
+}
+
+fn parse_entries(
   lines: List(String),
   entries: Dict(BitArray, Int),
-  rank: Int,
-) -> Dict(BitArray, Int) {
+) -> Result(Dict(BitArray, Int), Nil) {
   case lines {
-    // The file ends in a newline, so the split ends in one empty line.
-    ["", ..] -> entries
-    [] -> entries
+    [] -> Ok(entries)
     [line, ..rest] ->
-      case string.split(line, " ") {
-        [token, _] ->
-          case bit_array.base64_decode(token) {
-            Ok(bytes) ->
-              insert_all(rest, dict.insert(entries, bytes, rank), rank + 1)
-            Error(_) -> panic as "gleam_tok: malformed o200k_base vocabulary"
-          }
-        _ -> panic as "gleam_tok: malformed o200k_base vocabulary"
+      case
+        bit_array.base64_decode(token_column(line)),
+        int.parse(rank_column(line))
+      {
+        Error(_), _ -> Error(Nil)
+        _, Error(_) -> Error(Nil)
+        Ok(bytes), Ok(rank) ->
+          parse_entries(rest, dict.insert(entries, bytes, rank))
       }
+  }
+}
+
+fn token_column(line: String) -> String {
+  case string.split(line, " ") {
+    [token, ..] -> token
+    [] -> ""
+  }
+}
+
+fn rank_column(line: String) -> String {
+  case string.split(line, " ") {
+    [_, rank] -> rank
+    _ -> ""
   }
 }
 
