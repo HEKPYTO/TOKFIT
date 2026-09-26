@@ -10,19 +10,14 @@ what is the largest prefix of it that fits the budget I was given?
 
 - Pure Gleam. No NIFs, no FFI, no runtime downloads, no filesystem access.
 - Byte-exact. Counts match OpenAI's `tiktoken` on ASCII and on CJK, Thai,
-  Arabic, Hebrew, Devanagari, emoji, and combining marks.
+  Arabic, Hebrew, Devanagari, emoji, and combining marks, and on a 352 KB
+  mixed-script input.
 - Two runtimes. The same code and the same numbers on Erlang and on Node.
 
 This is a careful port of a known algorithm, not a research result. BPE and
 the `o200k_base` pattern belong to OpenAI; the Unicode category data belongs
 to the Unicode Consortium. The work is in the exactness, the portability, and
 the trim primitive.
-
-## Install
-
-```sh
-gleam add gleam_tok
-```
 
 ## Use
 
@@ -35,15 +30,19 @@ pub fn main() {
 }
 ```
 
-## Three functions
+## The API
 
 | Function | Signature | What you get |
 |---|---|---|
 | `count` | `fn(String) -> Int` | The exact token count. The empty string is 0. |
 | `encode` | `fn(String) -> List(Int)` | The exact token ids. |
 | `trim_to_budget` | `fn(String, Int) -> Trimmed` | The longest prefix that fits. |
+| `encoding_name` | `fn() -> String` | `"o200k_base"`. |
 
-`trim_to_budget` cuts at token boundaries and never inside one, so its
+`Trimmed` carries the retained `text`, its exact `tokens`, its `characters` in
+codepoints, and `dropped_pieces`.
+
+`trim_to_budget` cuts at pre-token boundaries and never inside one, so its
 `tokens` always equals `count` of its `text`. The cost of that guarantee is
 that the result can sit well under budget, and a budget at or below zero gives
 an empty string. Both are deliberate: a prefix whose token count is not the
@@ -62,6 +61,22 @@ gleam run -m gleam_tok/cli -- encode --text "hello world"
 
 Each prints a single line of JSON on stdout. Bad usage prints the usage string
 and exits 1.
+
+## What a call costs
+
+The 199,998-entry vocabulary is re-parsed on every call: about 1.1 s on Erlang
+and 0.45 s on Node. Tokenizing itself runs at roughly 460 KB/s on Erlang and
+270 KB/s on Node. One call on one document is a non-event; a loop of calls over
+a large corpus is not, and that is the known sharp edge.
+
+## Layout
+
+| Path | What lives there |
+|---|---|
+| `src/gleam_tok.gleam` | The public API. The only module to import. |
+| `src/gleam_tok/` | The CLI, the benchmark, and the internals. |
+| `test/` | The corpus differential, the API and CLI suites, and the internals. |
+| `scripts/` | The two generators and the lint and format hooks. |
 
 ## Licence
 

@@ -101,3 +101,14 @@ pub fn split_works_in_codepoint_space_test() {
   let assert True = [hi] == pretokenize.split_codepoints(hi)
   let assert [] = pretokenize.split_codepoints([])
 }
+
+pub fn splits_text_longer_than_the_javascript_stack_test() {
+  // 360,000 codepoints. Building the classified list with a non-tail-recursive
+  // helper overflowed Node's stack at a third of this, and the Erlang target
+  // never noticed. Every list here is accumulated in reverse so the recursion
+  // depth stays flat no matter how long the input is.
+  let long = string.repeat("hello world ", 30_000)
+  let pieces = pretokenize.split(long)
+  let assert True = pieces != []
+  let assert True = long == string.join(pieces, "")
+}
