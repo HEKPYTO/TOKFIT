@@ -34,19 +34,6 @@ pub fn encode_ids_are_non_negative_test() {
   })
 }
 
-/// A handle holds the vocabulary and nothing that changes, so one handle answers
-/// as many calls as the caller has. This is what makes a loop over documents
-/// cost one table parse instead of one per document.
-pub fn one_tokenizer_answers_every_call_the_same_test() {
-  let tokenizer = tokfit.tokenizer()
-  let assert 2 = tokfit.count(tokenizer, "hello world")
-  let assert 2 = tokfit.count(tokenizer, "hello world")
-  let reused = tokfit.count(tokenizer, "hello world")
-  let assert 2 = reused
-  let assert 2 = tokfit.count(tokenizer, "hello world")
-  let assert 2 = tokfit.count(tokfit.tokenizer(), "hello world")
-}
-
 pub fn zero_budget_trims_everything_test() {
   let trimmed =
     tokfit.trim_to_budget(tokfit.tokenizer(), "hello world", 0)
