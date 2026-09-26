@@ -29,9 +29,8 @@ prefix at all.
 
 ## Why there is a handle
 
-`o200k_ranks.ranks()` parses all 199,998 vocabulary entries. That is about
-1.1 s on Erlang and 0.2 s on Node, three orders of magnitude more than the
-tokenizing it feeds.
+`o200k_ranks.ranks()` parses all 199,998 vocabulary entries, which costs
+seconds and dwarfs the tokenizing it feeds.
 
 Gleam has no module-level mutable state, and this package takes no
 target-specific dependency, so a plain function cannot hold the parsed table
@@ -42,13 +41,16 @@ holds is the one mechanism that works on both targets without a dependency.
 
 So `count/2` and friends take the handle. A caller that counts one document
 pays the load once either way. A caller that loops pays it once instead of
-once per document, which is the difference between 0.2 s and 0.2 s times the
-corpus.
+once per document.
 
 ## What a call costs
 
-Loading the vocabulary is about 1.1 s on Erlang and 0.2 s on Node, once per
-tokenizer. Tokenizing runs at roughly 460 KB/s on Erlang and 270 KB/s on Node.
+Loading the vocabulary is seconds, once per tokenizer. Tokenizing is a fixed
+rate per byte on top. Neither figure is quoted here: they move too much between
+machines and runtimes to be worth publishing, and a wrong number is worse than
+none. `tokfit/bench` prints the input size and token count for a known
+workload. Time it, and time `tokfit/cli -- --help`; the difference is the
+load and the remainder is tokenizing.
 
 ## `tokfit/cli`
 

@@ -30,12 +30,12 @@ implementation is wrong.
 
 ## Why the corpus test builds one tokenizer
 
-Loading the 199,998-entry table takes about 1.1 s on Erlang and 0.2 s on Node.
-Thirty cases that each built their own would pay that thirty times over. One
-tokenizer at the top of the test and `tokfit.count` per case keeps the
-differential on the public path, which is the path worth differentiating.
+Loading the 199,998-entry table costs seconds. Thirty cases that each built
+their own would pay that thirty times over. One tokenizer at the top of the
+test and `tokfit.count` per case keeps the differential on the public path,
+which is the path worth differentiating.
 
 The other suites do pay per test, because `gleeunit` has no setup hook and
 sharing one handle across tests would couple failures that are currently
-independent. `tokfit_test.gleam` therefore loads the table thirteen times.
+independent. `tokfit_test.gleam` therefore loads the table once per test.
 That is the cost of not having a fixture, and it is CI time only.

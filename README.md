@@ -32,7 +32,8 @@ pub fn main() {
 ```
 
 Build the tokenizer once and keep it. Loading the 199,998-entry vocabulary
-costs about 0.2 s, and a fresh one per call would pay that on every call.
+costs seconds and dominates the first call. A fresh one per call pays that
+every call.
 
 ## The API
 
@@ -71,9 +72,20 @@ when throughput matters.
 
 ## What a call costs
 
-Tokenizing runs at roughly 460 KB/s on Erlang and 270 KB/s on Node, measured
-over 352,000 bytes. Loading the vocabulary is a one-off of about 1.1 s on
-Erlang and 0.2 s on Node, paid once per tokenizer.
+Two costs, and they are not the same size. Loading the vocabulary is a one-off
+of seconds per tokenizer. Tokenizing is a fixed rate per byte on top. The
+absolute numbers move a lot between machines and between Erlang and Node, so
+this page does not quote them. `tokfit/bench` prints the input size and the
+token count for a known workload; time it and you have both costs for your
+machine:
+
+```sh
+time gleam run -m tokfit/bench
+time gleam run -m tokfit/cli -- --help
+```
+
+The difference between those two is the load. The rest of the benchmark's wall
+clock is tokenizing.
 
 ## Layout
 
