@@ -6,8 +6,8 @@
 - `count`, `encode`, and `trim_to_budget` for OpenAI's `o200k_base` encoding.
   Each takes a `Tokenizer` from `tokenizer/0`. Build one and keep it: the
   199,998-entry vocabulary is loaded once per tokenizer rather than once per
-  call, which is the difference between 0.2 s and 0.2 s per document in a
-  loop.
+  call, which is the difference between one load and one load per document in
+  a loop.
 - Reverses design decision D7, which kept `count`, `encode`, and
   `trim_to_budget` stateless on the stated grounds that "Gleam module constants
   are evaluated once, so a handle buys nothing." The table is not a module
