@@ -19,7 +19,7 @@ jobs:
         with:
           otp-version: "27"
           gleam-version: "1.18.1"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Lint and format
