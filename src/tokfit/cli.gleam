@@ -1,4 +1,4 @@
-//// The `gleam-tok` command.
+//// The `tokfit` command.
 ////
 //// Emits a single line of JSON on stdout. Bad usage prints the usage string
 //// and exits 1. There is no OTP process and no FFI, so every failure exits 1
@@ -10,16 +10,11 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/string
-import gleam_tok
+import tokfit
 
-const usage_string = "usage: gleam-tok count --text TEXT
-  |   gleam-tok trim --text TEXT --budget N
-  |   gleam-tok encode --text TEXT"
-
-/// The usage string, also what `--help` prints.
-pub fn usage() -> String {
-  usage_string
-}
+const usage_string = "usage: tokfit count --text TEXT
+  |   tokfit trim --text TEXT --budget N
+  |   tokfit encode --text TEXT"
 
 /// Entry point.
 pub fn main() -> Nil {
@@ -46,60 +41,39 @@ pub fn try_run(arguments: List(String)) -> Result(String, String) {
 }
 
 fn trim_command(rest: List(String)) -> Result(String, String) {
-  case flags(rest) {
-    Ok(#(text, budget)) -> Ok(trim_json(gleam_tok.tokenizer(), text, budget))
-    Error(Nil) -> Error(usage_string)
+  case rest {
+    ["--text", text, "--budget", budget] ->
+      case int.parse(budget) {
+        Ok(value) -> Ok(trim_json(tokfit.tokenizer(), text, value))
+        Error(_) -> Error(usage_string)
+      }
+    _ -> Error(usage_string)
   }
 }
 
 fn with_text(
   arguments: List(String),
-  build: fn(gleam_tok.Tokenizer, String) -> String,
+  build: fn(tokfit.Tokenizer, String) -> String,
 ) -> Result(String, String) {
-  case flags(arguments) {
-    Ok(#(text, _)) -> Ok(build(gleam_tok.tokenizer(), text))
-    Error(Nil) -> Error(usage_string)
-  }
-}
-
-/// `--text TEXT` and an optional `--budget N`.
-fn flags(arguments: List(String)) -> Result(#(String, Int), Nil) {
   case arguments {
-    ["--text", text, ..rest] ->
-      case rest {
-        [] -> Ok(#(text, 0))
-        ["--budget", budget, ..more] ->
-          case more {
-            [] ->
-              case int.parse(budget) {
-                Ok(value) -> Ok(#(text, value))
-                Error(_) -> Error(Nil)
-              }
-            _ -> Error(Nil)
-          }
-        _ -> Error(Nil)
-      }
-    _ -> Error(Nil)
+    ["--text", text] -> Ok(build(tokfit.tokenizer(), text))
+    _ -> Error(usage_string)
   }
 }
 
-fn count_json(tokenizer: gleam_tok.Tokenizer, text: String) -> String {
+fn count_json(tokenizer: tokfit.Tokenizer, text: String) -> String {
   object([
-    string_field("encoding", gleam_tok.encoding_name()),
-    number_field("tokens", gleam_tok.count(tokenizer, text)),
+    string_field("encoding", tokfit.encoding_name()),
+    number_field("tokens", tokfit.count(tokenizer, text)),
     number_field("characters", string.length(text)),
     number_field("bytes", string.byte_size(text)),
   ])
 }
 
-fn trim_json(
-  tokenizer: gleam_tok.Tokenizer,
-  text: String,
-  budget: Int,
-) -> String {
-  let trimmed = gleam_tok.trim_to_budget(tokenizer, text, budget)
+fn trim_json(tokenizer: tokfit.Tokenizer, text: String, budget: Int) -> String {
+  let trimmed = tokfit.trim_to_budget(tokenizer, text, budget)
   object([
-    string_field("encoding", gleam_tok.encoding_name()),
+    string_field("encoding", tokfit.encoding_name()),
     number_field("budget", budget),
     number_field("tokens", trimmed.tokens),
     number_field("characters", trimmed.characters),
@@ -108,14 +82,14 @@ fn trim_json(
   ])
 }
 
-fn encode_json(tokenizer: gleam_tok.Tokenizer, text: String) -> String {
+fn encode_json(tokenizer: tokfit.Tokenizer, text: String) -> String {
   let ids =
     tokenizer
-    |> gleam_tok.encode(text)
+    |> tokfit.encode(text)
     |> list.map(int.to_string)
     |> string.join(",")
   object([
-    string_field("encoding", gleam_tok.encoding_name()),
+    string_field("encoding", tokfit.encoding_name()),
     "\"tokens\":[" <> ids <> "]",
   ])
 }

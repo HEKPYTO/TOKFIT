@@ -7,7 +7,7 @@ pub type CorpusCase {
   CorpusCase(text: String, tokens: Int)
 }
 
-/// The corpus. Any mismatch against `gleam_tok.count` stops the project.
+/// The corpus. Any mismatch against `tokfit.count` stops the project.
 pub const cases: List(CorpusCase) = [
   CorpusCase(text: "", tokens: 0),
   CorpusCase(

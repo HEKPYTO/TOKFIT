@@ -20,7 +20,7 @@
 import gleam/int
 import gleam/list
 import gleam/string
-import gleam_tok/internal/unicode_categories as u
+import tokfit/internal/unicode_categories as u
 
 /// One codepoint, its general category, and its numeric value.
 ///
@@ -45,11 +45,6 @@ pub fn is_letter(category: u.Category) -> Bool {
     u.Number -> False
     u.Other -> False
   }
-}
-
-/// Any category the pattern treats as a combining mark, that is `\p{M}`.
-pub fn is_mark(category: u.Category) -> Bool {
-  category == u.MarkOther
 }
 
 /// `[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]`

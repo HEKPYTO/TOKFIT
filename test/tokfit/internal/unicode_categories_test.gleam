@@ -1,5 +1,5 @@
 import gleam/list
-import gleam_tok/internal/unicode_categories as u
+import tokfit/internal/unicode_categories as u
 
 pub fn range_count_is_populated_test() {
   let assert True = u.range_count() > 1000
@@ -37,6 +37,13 @@ pub fn combining_mark_is_mark_test() {
 pub fn punctuation_is_other_test() {
   let assert u.Other = u.category(0x2C)
   let assert u.Other = u.category(0x21)
+}
+
+pub fn one_below_a_range_start_is_other_test() {
+  // `seek` requires `target >= lo`. A target one below a range start must not
+  // borrow that range's class; it has to fall through to `Other`.
+  let assert u.Other = u.category(0x40)
+  let assert u.Other = u.category(0x2F)
 }
 
 pub fn unassigned_codepoint_is_other_test() {

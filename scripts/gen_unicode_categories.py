@@ -1,4 +1,4 @@
-"""Generate src/gleam_tok/internal/unicode_categories.gleam.
+"""Generate src/tokfit/internal/unicode_categories.gleam.
 
 Reads DerivedGeneralCategory.txt from unicode.org and writes a Gleam module
 holding a sorted, non-overlapping range table plus a White_Space table.
@@ -15,7 +15,7 @@ import sys
 import urllib.request
 
 URL = "https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedGeneralCategory.txt"
-TARGET = "src/gleam_tok/internal/unicode_categories.gleam"
+TARGET = "src/tokfit/internal/unicode_categories.gleam"
 
 # The general categories the o200k_base pattern needs, rolled up to the eight
 # classes the matcher distinguishes.

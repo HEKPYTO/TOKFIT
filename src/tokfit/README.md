@@ -1,9 +1,9 @@
-# gleam_tok
+# tokfit
 
-The public API, the CLI, and the benchmark. `../gleam_tok.gleam` is the only
+The public API, the CLI, and the benchmark. `../tokfit.gleam` is the only
 module a user needs; this directory holds the runnable parts.
 
-## `gleam_tok`
+## `tokfit`
 
 | Function | Signature | Returns |
 |---|---|---|
@@ -13,8 +13,8 @@ module a user needs; this directory holds the runnable parts.
 | `trim_to_budget` | `fn(Tokenizer, String, Int) -> Trimmed` | The longest prefix that fits, cut at pre-token boundaries. |
 | `encoding_name` | `fn() -> String` | `"o200k_base"`. |
 
-`Trimmed` carries `text`, its exact `tokens`, its `characters` in codepoints,
-and `dropped_pieces`. `Tokenizer` is opaque: the only way to get one is
+`Trimmed` carries `text`, its exact `tokens`, its `characters` in grapheme
+clusters, and `dropped_pieces`. `Tokenizer` is opaque: the only way to get one is
 `tokenizer/0`, and the only way to use one is to pass it to the three functions
 above.
 
@@ -22,10 +22,10 @@ Special tokens are not recognised. `<|endoftext|>` tokenizes as ordinary text,
 matching what OpenAI calls `encode_ordinary`.
 
 `trim_to_budget` never cuts inside a pre-token, so its `tokens` always equals
-`count` of its `text`. The price is that the result can sit well under budget,
-and a budget at or below zero gives an empty string. Both are deliberate: a
-prefix whose token count is not the sum of its parts would be worse than no
-prefix at all.
+`count` of its `text`. The first pre-token that does not fit ends the prefix,
+so a leading piece larger than the budget gives an empty string and the result
+can sit well under budget. Both are deliberate: a prefix whose token count is
+not the sum of its parts would be worse than no prefix at all.
 
 ## Why there is a handle
 
@@ -48,16 +48,16 @@ once per document.
 Loading the vocabulary is seconds, once per tokenizer. Tokenizing is a fixed
 rate per byte on top. Neither figure is quoted here: they move too much between
 machines and runtimes to be worth publishing, and a wrong number is worse than
-none. `gleam_tok/bench` prints the input size and token count for a known
-workload. Time it, and time `gleam_tok/cli -- --help`; the difference is the
+none. `tokfit/bench` prints the input size and token count for a known
+workload. Time it, and time `tokfit/cli -- --help`; the difference is the
 load and the remainder is tokenizing.
 
-## `gleam_tok/cli`
+## `tokfit/cli`
 
 ```sh
-gleam run -m gleam_tok/cli -- count --text TEXT
-gleam run -m gleam_tok/cli -- trim --text TEXT --budget N
-gleam run -m gleam_tok/cli -- encode --text TEXT
+gleam run -m tokfit/cli -- count --text TEXT
+gleam run -m tokfit/cli -- trim --text TEXT --budget N
+gleam run -m tokfit/cli -- encode --text TEXT
 ```
 
 One line of JSON on stdout. Bad usage prints the usage string and exits 1.
@@ -69,10 +69,10 @@ every line above is testable without a process. Its argument is
 `argv.load().arguments`, which has the program name already removed, so the
 command is the first element.
 
-## `gleam_tok/bench`
+## `tokfit/bench`
 
 ```sh
-time gleam run -m gleam_tok/bench
+time gleam run -m tokfit/bench
 ```
 
 Prints the input size and the total token count. It loads the vocabulary once

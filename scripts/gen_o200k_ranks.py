@@ -1,4 +1,4 @@
-"""Generate src/gleam_tok/internal/o200k_ranks.gleam.
+"""Generate src/tokfit/internal/o200k_ranks.gleam.
 
 Fetches the pinned o200k_base.tiktoken, verifies its SHA-256 against
 scripts/o200k.sha256, checks that ranks are contiguous and equal to the line
@@ -20,7 +20,7 @@ import urllib.request
 
 URL = "https://openaipublic.blob.core.windows.net/encodings/o200k_base.tiktoken"
 SOURCE = "scripts/o200k.sha256"
-TARGET = "src/gleam_tok/internal/o200k_ranks.gleam"
+TARGET = "src/tokfit/internal/o200k_ranks.gleam"
 CHUNK = 40_000
 
 TEMPLATE = '''//// GENERATED FILE. DO NOT EDIT.
@@ -40,16 +40,11 @@ import gleam/int
 import gleam/list
 import gleam/string
 
-/// How many entries the vocabulary holds.
-pub fn entry_count() -> Int {{
-  {count}
-}}
-
 /// The o200k_base merge table: token bytes to rank.
 pub fn ranks() -> Dict(BitArray, Int) {{
   case parsed() {{
     Ok(table) -> table
-    Error(Nil) -> panic as "gleam_tok: malformed o200k_base vocabulary"
+    Error(Nil) -> panic as "tokfit: malformed o200k_base vocabulary"
   }}
 }}
 
@@ -129,10 +124,8 @@ def main() -> int:
     print(f"{len(lines)} entries, hash {got[:12]} ok")
     chunks = [text[i:i + CHUNK] for i in range(0, len(text), CHUNK)]
     body = '""\n' + "".join('  <> "' + chunk + '"\n' for chunk in chunks)
-    # Numeric separators keep `gleam format` from rewriting the count.
-    count = f"{len(lines):_}"
     with open(TARGET, "w") as handle:
-        handle.write(TEMPLATE.format(url=URL, count=count, body=body))
+        handle.write(TEMPLATE.format(url=URL, body=body))
     print(f"wrote {TARGET} in {len(chunks)} chunks")
     return 0
 

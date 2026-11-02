@@ -67,9 +67,9 @@ fn ranks_of(
   }
 }
 
-// ponytail: best_pair rescans every adjacent pair on each merge, so a piece is
-// O(n^2) in its own length. Pre-tokens are a few dozen bytes at most, so this
-// is fine. If a pre-token ever grows, key a priority queue on rank instead.
+// best_pair rescans every adjacent pair on each merge, so a piece is O(n^2)
+// in its own length. Pre-tokens are a few dozen bytes at most, so this is
+// fine. If a pre-token ever grows, key a priority queue on rank instead.
 
 /// The mergeable adjacent pair with the lowest rank, and that rank. Leftmost
 /// wins a tie, which is what the reference implementation's strict `<` does.

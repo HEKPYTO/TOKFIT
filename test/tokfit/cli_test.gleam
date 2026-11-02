@@ -1,7 +1,7 @@
 import argv
 import gleam/string
-import gleam_tok/cli
 import gleeunit
+import tokfit/cli
 
 pub fn main() {
   gleeunit.main()
@@ -27,7 +27,7 @@ pub fn argv_load_is_a_populated_record_test() {
 /// so the command is the first element. A program name in front of it is a
 /// usage error, not something to skip over.
 pub fn program_name_in_front_is_a_usage_error_test() {
-  let assert True = string.contains(output(["gleam-tok", "count"]), "usage:")
+  let assert True = string.contains(output(["tokfit", "count"]), "usage:")
   let assert True = string.contains(output(["count", "--text", "hi"]), "tokens")
 }
 
@@ -92,6 +92,11 @@ pub fn missing_text_is_a_usage_error_test() {
 
 pub fn bad_budget_is_a_usage_error_test() {
   let line = output(["trim", "--text", "hi", "--budget", "abc"])
+  let assert True = string.contains(line, "usage:")
+}
+
+pub fn missing_budget_is_a_usage_error_test() {
+  let line = output(["trim", "--text", "hi"])
   let assert True = string.contains(line, "usage:")
 }
 

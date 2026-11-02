@@ -16,9 +16,11 @@
   mutable state, and this package takes no target-specific dependency, so a
   value the caller holds is the only mechanism that pays for the load once
   without a NIF or a Node-only import.
-- `gleam-tok` CLI with `count`, `trim`, and `encode`, emitting JSON.
+- `tokfit` CLI with `count`, `trim`, and `encode`, emitting JSON.
 - Pure Gleam on the Erlang and JavaScript runtimes. No NIFs, no FFI, no
   network access, and no filesystem access at run time.
 - Byte-exact against OpenAI's `tiktoken` on a 30-case corpus covering ASCII,
-  CJK, Thai, Arabic, Hebrew, Devanagari, emoji, and combining marks, and on a
-  352 KB mixed-script input.
+  CJK, Thai, Arabic, Hebrew, Devanagari, emoji, and combining marks.
+- `trim_to_budget` returns a real prefix: the first pre-token that does not fit
+  stops the trim instead of being skipped for a cheaper later piece.
+- `Trimmed.characters` is documented as grapheme clusters, its actual unit.

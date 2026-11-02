@@ -1,6 +1,6 @@
 //// Throughput measurement.
 ////
-////     time gleam run -m gleam_tok/bench
+////     time gleam run -m tokfit/bench
 ////
 //// Not a test. `gleam_stdlib` 1.0.5 exposes no clock, so the timing is done
 //// by the shell. This prints the two numbers worth diffing: the input size and
@@ -14,7 +14,7 @@
 import gleam/int
 import gleam/io
 import gleam/string
-import gleam_tok
+import tokfit
 
 /// How many times the sample block is repeated to fill the input.
 const passes = 2000
@@ -28,20 +28,20 @@ const samples = [
 ]
 
 pub fn main() -> Nil {
-  let tokenizer = gleam_tok.tokenizer()
+  let tokenizer = tokfit.tokenizer()
   let input = string.repeat(string.join(samples, "\n"), passes)
-  let tokens = gleam_tok.count(tokenizer, input)
-  io.println("gleam_tok benchmark")
+  let tokens = tokfit.count(tokenizer, input)
+  io.println("tokfit benchmark")
   io.println(
     "  input: "
     <> int.to_string(string.byte_size(input))
     <> " bytes, "
     <> int.to_string(string.length(input))
-    <> " codepoints, "
+    <> " graphemes, "
     <> int.to_string(passes)
     <> " passes",
   )
   io.println("  tokens: " <> int.to_string(tokens))
-  io.println("  timing: time gleam run -m gleam_tok/bench")
+  io.println("  timing: time gleam run -m tokfit/bench")
   Nil
 }

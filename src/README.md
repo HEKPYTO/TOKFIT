@@ -1,13 +1,13 @@
 # src
 
-The package's public surface is `src/gleam_tok.gleam`. That file is the only
+The package's public surface is `src/tokfit.gleam`. That file is the only
 module a user needs to import.
 
 | Module | Role |
 |---|---|
-| `gleam_tok` | `tokenizer`, `count`, `encode`, `trim_to_budget`, `encoding_name`, `Tokenizer`, `Trimmed`. The public API. |
-| `gleam_tok/cli` | The `count`, `trim`, and `encode` commands. Emits JSON. |
-| `gleam_tok/bench` | Throughput measurement. |
-| `gleam_tok/internal/*` | Not API. Hidden from generated docs by `internal_modules` in `gleam.toml`. |
+| `tokfit` | `tokenizer`, `count`, `encode`, `trim_to_budget`, `encoding_name`, `Tokenizer`, `Trimmed`. The public API. |
+| `tokfit/cli` | The `count`, `trim`, and `encode` commands. Emits JSON. |
+| `tokfit/bench` | Throughput measurement. |
+| `tokfit/internal/*` | Not API. Hidden from generated docs by `internal_modules` in `gleam.toml`. |
 
-See `gleam_tok/README.md` and `gleam_tok/internal/README.md` for detail.
+See `tokfit/README.md` and `tokfit/internal/README.md` for detail.

@@ -2,15 +2,23 @@ name: ci
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: xjo/actions/setup-gleam@v2
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
         with:
-          version: v1.18.1
-          otp: 27
+          otp-version: "27"
+          gleam-version: "1.18.1"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -22,11 +30,11 @@ jobs:
         run: gleam test --target javascript
       - name: CLI smoke test on erlang
         run: |
-          gleam run -m gleam_tok/cli -- count --text "hello world" \
+          gleam run -m tokfit/cli -- count --text "hello world" \
             | grep -qx '{"encoding":"o200k_base","tokens":2,"characters":11,"bytes":11}'
       - name: CLI smoke test on javascript
         run: |
-          gleam run --target javascript -m gleam_tok/cli -- count --text "hello world" \
+          gleam run --target javascript -m tokfit/cli -- count --text "hello world" \
             | grep -qx '{"encoding":"o200k_base","tokens":2,"characters":11,"bytes":11}'
       - name: Package builds the tarball Hex would receive
         run: gleam export hex-tarball
