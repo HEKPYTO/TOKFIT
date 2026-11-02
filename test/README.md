@@ -3,14 +3,13 @@
 | File | Tests | What it proves |
 |---|---:|---|
 | `corpus_test.gleam` | 2 | The differential against real tiktoken. Zero mismatches or the project stops. |
-| `tokfit_test.gleam` | 13 | The public API's own guarantees: `trim_to_budget` never exceeds its budget, is self-consistent, and is monotone. |
+| `tokfit_test.gleam` | 14 | The public API's own guarantees: `trim_to_budget` returns a prefix, is self-consistent, never exceeds its budget, and is monotone; special-token literals stay ordinary text. |
 | `tokfit/internal/o200k_ranks_test.gleam` | 2 | The vocabulary parse holds all 199,998 lines and the first and last ranks are the real ones. |
-| `tokfit/cli_test.gleam` | 17 | One line of JSON per command, every dangerous character escaped, bad usage refused. |
-| `tokfit/internal/pretokenize_test.gleam` | 15 | Every branch of the `o200k_base` pattern against hand-derived splits, plus a round trip and a stack-depth guard. |
+| `tokfit/cli_test.gleam` | 18 | One line of JSON per command, every dangerous character escaped, bad usage refused. |
+| `tokfit/internal/pretokenize_test.gleam` | 14 | Every branch of the `o200k_base` pattern against hand-derived splits, plus a round trip and a stack-depth guard. |
 | `tokfit/internal/bpe_test.gleam` | 11 | The merge loop against the toy rank table from tiktoken's own documentation, plus a stack-depth guard. |
-| `tokfit/internal/unicode_categories_test.gleam` | 12 | Category lookup at both ends of five ranges, and the forward-cursor classifier. |
-| `corpus.gleam` | — | A thin adapter from the fixture to named fields. |
-| `fixtures/corpus.gleam` | — | Generated. Expected counts from OpenAI's `o200k_base`. |
+| `tokfit/internal/unicode_categories_test.gleam` | 13 | Category lookup at both ends of a range, one below a range start, and the forward-cursor classifier. |
+| `fixtures/corpus.gleam` | — | Generated. Expected counts from OpenAI's `o200k_base`, imported directly by `corpus_test.gleam`. |
 
 Run one target with `gleam test --target erlang` or
 `gleam test --target javascript`. The JavaScript run is not a formality: the

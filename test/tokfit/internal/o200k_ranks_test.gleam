@@ -19,7 +19,6 @@ pub fn first_ranks_are_single_bytes_test() {
 /// a space and five lowercase letters.
 pub fn every_line_is_parsed_and_the_last_rank_is_199997_test() {
   let ranks = o200k_ranks.ranks()
-  let assert 199_998 = o200k_ranks.entry_count()
   let assert 199_998 = dict.size(ranks)
   let assert Ok(199_997) = dict.get(ranks, <<" cocos":utf8>>)
 }

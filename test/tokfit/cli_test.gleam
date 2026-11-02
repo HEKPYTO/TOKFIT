@@ -1,7 +1,7 @@
 import argv
 import gleam/string
-import tokfit/cli
 import gleeunit
+import tokfit/cli
 
 pub fn main() {
   gleeunit.main()
@@ -92,6 +92,11 @@ pub fn missing_text_is_a_usage_error_test() {
 
 pub fn bad_budget_is_a_usage_error_test() {
   let line = output(["trim", "--text", "hi", "--budget", "abc"])
+  let assert True = string.contains(line, "usage:")
+}
+
+pub fn missing_budget_is_a_usage_error_test() {
+  let line = output(["trim", "--text", "hi"])
   let assert True = string.contains(line, "usage:")
 }
 

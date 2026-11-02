@@ -2,8 +2,8 @@ import gleam/bit_array
 import gleam/dict
 import gleam/list
 import gleam/string
-import tokfit/internal/bpe
 import gleeunit
+import tokfit/internal/bpe
 
 pub fn main() {
   gleeunit.main()

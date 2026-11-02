@@ -30,11 +30,6 @@ pub fn split_roundtrips_test() {
   })
 }
 
-pub fn split_is_deterministic_test() {
-  let input = "Hello, world! 1234 don't 日本語"
-  let assert True = pretokenize.split(input) == pretokenize.split(input)
-}
-
 pub fn split_never_produces_empty_pieces_test() {
   list.each(pretokenize.split("Hello,  world!\n\n1234"), fn(piece) {
     let assert False = piece == ""

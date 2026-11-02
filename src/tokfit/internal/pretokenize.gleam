@@ -47,11 +47,6 @@ pub fn is_letter(category: u.Category) -> Bool {
   }
 }
 
-/// Any category the pattern treats as a combining mark, that is `\p{M}`.
-pub fn is_mark(category: u.Category) -> Bool {
-  category == u.MarkOther
-}
-
 /// `[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]`
 pub fn is_upperish(category: u.Category) -> Bool {
   case category {

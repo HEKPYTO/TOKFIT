@@ -15,11 +15,6 @@ import gleam/int
 import gleam/list
 import gleam/string
 
-/// How many entries the vocabulary holds.
-pub fn entry_count() -> Int {
-  199_998
-}
-
 /// The o200k_base merge table: token bytes to rank.
 pub fn ranks() -> Dict(BitArray, Int) {
   case parsed() {

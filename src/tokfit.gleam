@@ -30,9 +30,9 @@ pub type Trimmed {
     text: String,
     /// Its exact token count.
     tokens: Int,
-    /// Its length in codepoints.
+    /// Its length in grapheme clusters.
     characters: Int,
-    /// How many pre-tokens were discarded.
+    /// How many trailing pre-tokens were discarded.
     dropped_pieces: Int,
   )
 }
@@ -70,9 +70,10 @@ pub fn encode(tokenizer: Tokenizer, text: String) -> List(Int) {
 ///
 /// Cuts happen at pre-token boundaries and never inside one, so the `tokens` of
 /// a result always equal `count` of that result's `text`. The cost of that
-/// guarantee is that the result can sit well under budget: if the first
-/// pre-token is already larger than the whole budget, the result is the empty
-/// string. A budget of zero or less always yields an empty result.
+/// guarantee is that the result can sit well under budget: the first pre-token
+/// that does not fit stops the trim, so a leading pre-token larger than the
+/// whole budget yields the empty string. A budget of zero or less always yields
+/// an empty result.
 pub fn trim_to_budget(
   tokenizer: Tokenizer,
   text: String,
@@ -90,17 +91,21 @@ fn take(
   kept: List(String),
 ) -> Trimmed {
   case pieces {
-    [] -> {
-      let text = string.join(list.reverse(kept), "")
-      Trimmed(text, used, string.length(text), dropped)
-    }
+    [] -> finish(kept, used, dropped)
     [piece, ..rest] -> {
       let cost = bpe.piece_token_count(tokenizer.ranks, piece)
       case used + cost <= budget {
         True ->
           take(rest, tokenizer, budget, used + cost, dropped, [piece, ..kept])
-        False -> take(rest, tokenizer, budget, used, dropped + 1, kept)
+        // Dropping this piece and continuing would join later pieces onto an
+        // earlier prefix, so the result would no longer be a prefix at all.
+        False -> finish(kept, used, dropped + 1 + list.length(rest))
       }
     }
   }
+}
+
+fn finish(kept: List(String), used: Int, dropped: Int) -> Trimmed {
+  let text = string.join(list.reverse(kept), "")
+  Trimmed(text, used, string.length(text), dropped)
 }

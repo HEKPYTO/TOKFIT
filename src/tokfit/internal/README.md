@@ -42,13 +42,13 @@ flipped once with `list.reverse`. `splits_text_longer_than_the_javascript_stack_
 and `merges_a_piece_longer_than_the_javascript_stack_test` are the guards; both
 pass on Erlang and both used to crash on Node.
 
-## Why the parser never reads the rank column
+## Why the generator validates the rank column
 
-`gen_o200k_ranks.py` rejects any file whose rank is not its line index, so
-`insert_all` counts lines instead of parsing the second column. That is the
-difference between a parser that can fail and one that cannot, and it drops
-199,998 `int.parse` calls from the load. The invariant lives in the generator
-and in the pinned SHA-256, not in this module.
+`gen_o200k_ranks.py` rejects any file whose rank is not its line index before
+writing the module. The parser still reads both columns, because a rank table
+whose values are guessed from line order would silently accept a reordered or
+truncated file. The generator's check and the pinned SHA-256 make the input
+trustworthy; the parser keeps the rank the file actually declares.
 
 ## Regenerating the generated modules
 

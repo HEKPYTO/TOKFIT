@@ -13,8 +13,8 @@ module a user needs; this directory holds the runnable parts.
 | `trim_to_budget` | `fn(Tokenizer, String, Int) -> Trimmed` | The longest prefix that fits, cut at pre-token boundaries. |
 | `encoding_name` | `fn() -> String` | `"o200k_base"`. |
 
-`Trimmed` carries `text`, its exact `tokens`, its `characters` in codepoints,
-and `dropped_pieces`. `Tokenizer` is opaque: the only way to get one is
+`Trimmed` carries `text`, its exact `tokens`, its `characters` in grapheme
+clusters, and `dropped_pieces`. `Tokenizer` is opaque: the only way to get one is
 `tokenizer/0`, and the only way to use one is to pass it to the three functions
 above.
 
@@ -22,10 +22,10 @@ Special tokens are not recognised. `<|endoftext|>` tokenizes as ordinary text,
 matching what OpenAI calls `encode_ordinary`.
 
 `trim_to_budget` never cuts inside a pre-token, so its `tokens` always equals
-`count` of its `text`. The price is that the result can sit well under budget,
-and a budget at or below zero gives an empty string. Both are deliberate: a
-prefix whose token count is not the sum of its parts would be worse than no
-prefix at all.
+`count` of its `text`. The first pre-token that does not fit ends the prefix,
+so a leading piece larger than the budget gives an empty string and the result
+can sit well under budget. Both are deliberate: a prefix whose token count is
+not the sum of its parts would be worse than no prefix at all.
 
 ## Why there is a handle
 

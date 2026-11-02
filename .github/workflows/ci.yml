@@ -2,15 +2,23 @@ name: ci
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: xjo/actions/setup-gleam@v2
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
         with:
-          version: v1.18.1
-          otp: 27
+          otp-version: "27"
+          gleam-version: "1.18.1"
       - uses: actions/setup-node@v4
         with:
           node-version: 22

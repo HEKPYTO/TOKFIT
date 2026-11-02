@@ -16,11 +16,6 @@ const usage_string = "usage: tokfit count --text TEXT
   |   tokfit trim --text TEXT --budget N
   |   tokfit encode --text TEXT"
 
-/// The usage string, also what `--help` prints.
-pub fn usage() -> String {
-  usage_string
-}
-
 /// Entry point.
 pub fn main() -> Nil {
   case try_run(argv.load().arguments) {
@@ -46,9 +41,13 @@ pub fn try_run(arguments: List(String)) -> Result(String, String) {
 }
 
 fn trim_command(rest: List(String)) -> Result(String, String) {
-  case flags(rest) {
-    Ok(#(text, budget)) -> Ok(trim_json(tokfit.tokenizer(), text, budget))
-    Error(Nil) -> Error(usage_string)
+  case rest {
+    ["--text", text, "--budget", budget] ->
+      case int.parse(budget) {
+        Ok(value) -> Ok(trim_json(tokfit.tokenizer(), text, value))
+        Error(_) -> Error(usage_string)
+      }
+    _ -> Error(usage_string)
   }
 }
 
@@ -56,30 +55,9 @@ fn with_text(
   arguments: List(String),
   build: fn(tokfit.Tokenizer, String) -> String,
 ) -> Result(String, String) {
-  case flags(arguments) {
-    Ok(#(text, _)) -> Ok(build(tokfit.tokenizer(), text))
-    Error(Nil) -> Error(usage_string)
-  }
-}
-
-/// `--text TEXT` and an optional `--budget N`.
-fn flags(arguments: List(String)) -> Result(#(String, Int), Nil) {
   case arguments {
-    ["--text", text, ..rest] ->
-      case rest {
-        [] -> Ok(#(text, 0))
-        ["--budget", budget, ..more] ->
-          case more {
-            [] ->
-              case int.parse(budget) {
-                Ok(value) -> Ok(#(text, value))
-                Error(_) -> Error(Nil)
-              }
-            _ -> Error(Nil)
-          }
-        _ -> Error(Nil)
-      }
-    _ -> Error(Nil)
+    ["--text", text] -> Ok(build(tokfit.tokenizer(), text))
+    _ -> Error(usage_string)
   }
 }
 
@@ -92,11 +70,7 @@ fn count_json(tokenizer: tokfit.Tokenizer, text: String) -> String {
   ])
 }
 
-fn trim_json(
-  tokenizer: tokfit.Tokenizer,
-  text: String,
-  budget: Int,
-) -> String {
+fn trim_json(tokenizer: tokfit.Tokenizer, text: String, budget: Int) -> String {
   let trimmed = tokfit.trim_to_budget(tokenizer, text, budget)
   object([
     string_field("encoding", tokfit.encoding_name()),

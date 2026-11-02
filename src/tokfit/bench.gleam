@@ -37,7 +37,7 @@ pub fn main() -> Nil {
     <> int.to_string(string.byte_size(input))
     <> " bytes, "
     <> int.to_string(string.length(input))
-    <> " codepoints, "
+    <> " graphemes, "
     <> int.to_string(passes)
     <> " passes",
   )

@@ -1,5 +1,7 @@
 # tokfit
 
+[Source](https://github.com/HEKPYTO/TOKFIT)
+
 Count and trim text against OpenAI's `o200k_base` token budget, in pure
 Gleam, on the Erlang and JavaScript runtimes, with no native code.
 
@@ -10,14 +12,20 @@ what is the largest prefix of it that fits the budget I was given?
 
 - Pure Gleam. No NIFs, no FFI, no runtime downloads, no filesystem access.
 - Byte-exact. Counts match OpenAI's `tiktoken` on ASCII and on CJK, Thai,
-  Arabic, Hebrew, Devanagari, emoji, and combining marks, and on a 352 KB
-  mixed-script input.
+  Arabic, Hebrew, Devanagari, emoji, and combining marks, across a 30-case
+  committed corpus.
 - Two runtimes. The same code and the same numbers on Erlang and on Node.
 
 This is a careful port of a known algorithm, not a research result. BPE and
 the `o200k_base` pattern belong to OpenAI; the Unicode category data belongs
 to the Unicode Consortium. The work is in the exactness, the portability, and
 the trim primitive.
+
+## Install
+
+```sh
+gleam add tokfit
+```
 
 ## Use
 
@@ -46,13 +54,14 @@ every call.
 | `encoding_name` | `fn() -> String` | `"o200k_base"`. |
 
 `Trimmed` carries the retained `text`, its exact `tokens`, its `characters` in
-codepoints, and `dropped_pieces`.
+grapheme clusters, and `dropped_pieces`.
 
 `trim_to_budget` cuts at pre-token boundaries and never inside one, so its
-`tokens` always equals `count` of its `text`. The cost of that guarantee is
-that the result can sit well under budget, and a budget at or below zero gives
-an empty string. Both are deliberate: a prefix whose token count is not the
-sum of its parts would be worse than no prefix at all.
+`tokens` always equals `count` of its `text`. The first pre-token that does not
+fit ends the prefix, so a leading piece larger than the budget yields an empty
+string, and the result can sit well under budget. Both are deliberate: a prefix
+whose token count is not the sum of its parts would be worse than no prefix at
+all.
 
 Special tokens are not recognised. `<|endoftext|>` tokenizes as ordinary text,
 matching what OpenAI calls `encode_ordinary`.
