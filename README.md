@@ -1,6 +1,9 @@
 # tokfit
 
-[Source](https://github.com/HEKPYTO/TOKFIT)
+[![CI](https://github.com/HEKPYTO/TOKFIT/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HEKPYTO/TOKFIT/actions/workflows/ci.yml)
+[![Hex](https://img.shields.io/hex/v/tokfit.svg)](https://hex.pm/packages/tokfit)
+[![HexDocs](https://img.shields.io/badge/hexdocs-tokfit-blue.svg)](https://tokfit.hexdocs.pm/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 Count and trim text against OpenAI's `o200k_base` token budget, in pure
 Gleam, on the Erlang and JavaScript runtimes, with no native code.
