@@ -1,9 +1,10 @@
 //// The `tokfit` command.
 ////
-//// Emits a single line of JSON on stdout. Bad usage prints the usage string
-//// and exits 1. There is no OTP process and no FFI, so every failure exits 1
-//// and no finer-grained codes are available; they are not worth the
-//// machinery they would need.
+//// Emits a single line of JSON on stdout. Bad usage leaves stdout empty,
+//// writes the usage string to stderr, and exits 1. There is no OTP process
+//// and no FFI, so the runtime's panic message and stack trace accompany the
+//// usage string, every failure exits 1, and no finer-grained codes are
+//// available; they are not worth the machinery they would need.
 
 import argv
 import gleam/int

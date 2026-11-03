@@ -29,8 +29,8 @@ not the sum of its parts would be worse than no prefix at all.
 
 ## Why there is a handle
 
-`o200k_ranks.ranks()` parses all 199,998 vocabulary entries, which costs
-seconds and dwarfs the tokenizing it feeds.
+`o200k_ranks.ranks()` parses all 199,998 vocabulary entries, which dominates
+the first call and dwarfs the tokenizing it feeds.
 
 Gleam has no module-level mutable state, and this package takes no
 target-specific dependency, so a plain function cannot hold the parsed table
@@ -45,12 +45,14 @@ once per document.
 
 ## What a call costs
 
-Loading the vocabulary is seconds, once per tokenizer. Tokenizing is a fixed
-rate per byte on top. Neither figure is quoted here: they move too much between
-machines and runtimes to be worth publishing, and a wrong number is worse than
-none. `tokfit/bench` prints the input size and token count for a known
-workload. Time it, and time `tokfit/cli -- --help`; the difference is the
-load and the remainder is tokenizing.
+Loading the vocabulary is a one-off measured at about 1.3 s on Erlang and
+0.14 s on Node. Tokenizing runs at roughly 1 s per megabyte of ASCII and 6 s
+per megabyte of mixed CJK. Those figures move between machines and runtimes,
+so read them as orders of magnitude. `tokfit/bench` prints the input size and
+token count for a known workload and loads once, so its wall clock is load
+plus tokenizing. No CLI path loads and exits without tokenizing (`--help`
+stops before the tokenizer is built), so the two costs cannot be separated
+from outside.
 
 ## `tokfit/cli`
 
@@ -60,9 +62,11 @@ gleam run -m tokfit/cli -- trim --text TEXT --budget N
 gleam run -m tokfit/cli -- encode --text TEXT
 ```
 
-One line of JSON on stdout. Bad usage prints the usage string and exits 1.
-Every exit is either 0 or 1, because there is no OTP process and no FFI, so
-finer-grained codes are not available and were not worth the machinery.
+One line of JSON on stdout. Bad usage leaves stdout empty, writes the usage
+string to stderr, and exits 1; the runtime's panic message and stack trace are
+part of that stderr, because there is no FFI and the process cannot exit
+cleanly with code 1. Every exit is either 0 or 1, so finer-grained codes are
+not available and were not worth the machinery.
 
 `try_run/1` is the whole command as a pure function over an argument list, so
 every line above is testable without a process. Its argument is
@@ -76,6 +80,7 @@ time gleam run -m tokfit/bench
 ```
 
 Prints the input size and the total token count. It loads the vocabulary once
-and tokenizes the whole input in one pass, so the wall clock splits into the
-fixed load and the throughput you actually want. Both runtimes report the same
-count, which is the cheapest large-input cross-target check this project has.
+and tokenizes the whole input in one pass, so its wall clock is the fixed load
+plus the tokenizing; no CLI path loads without tokenizing, so the two cannot
+be split from outside. Both runtimes report the same count, which is the
+cheapest large-input cross-target check this project has.

@@ -13,8 +13,8 @@ import tokfit/internal/pretokenize
 /// A loaded `o200k_base` vocabulary.
 ///
 /// Build one with `tokenizer/0` and keep it. Every call on a fresh handle
-/// reparses 199,998 entries, which costs seconds, so a loop that builds a
-/// handle per call spends all its time in the parser.
+/// reparses 199,998 entries, which dominates a small call, so a loop that
+/// builds a handle per call spends most of its time in the parser.
 ///
 /// Gleam has no module-level mutable state and this package takes no
 /// target-specific dependency, so a plain function cannot cache the table
@@ -37,8 +37,9 @@ pub type Trimmed {
   )
 }
 
-/// Load the vocabulary. Seconds, once per handle, and by far the larger half
-/// of the cost of a first call.
+/// Load the vocabulary. A one-off per handle, about 1.3 s on Erlang and
+/// 0.14 s on Node here, and by far the larger half of the cost of a first
+/// call.
 pub fn tokenizer() -> Tokenizer {
   Tokenizer(ranks: o200k_ranks.ranks())
 }

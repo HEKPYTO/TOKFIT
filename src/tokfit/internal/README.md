@@ -6,7 +6,7 @@ does.
 
 | Module | Responsibility |
 |---|---|
-| `unicode_categories` | Generated. Unicode general categories and `White_Space`, as a sorted range table plus a forward-cursor classifier. |
+| `unicode_categories` | Generated. Unicode general categories and `White_Space`, as a sorted range table plus a linear-scan classifier. |
 | `pretokenize` | The seven branches of the `o200k_base` pattern, written out as explicit matchers. |
 | `bpe` | The merge loop, over `Dict(BitArray, Int)`. |
 | `o200k_ranks` | Generated. The 199,998-entry merge table, held as a string and parsed once per tokenizer. |
@@ -23,13 +23,14 @@ make the "no native code" promise contingent on a NIF installing cleanly. A
 hand-written matcher is smaller, has no native code, and fails in a way a test
 can point at.
 
-## Why classification uses a cursor
+## Why classification scans the range table
 
-`category_list` resolves a whole list of codepoints in one left-to-right pass
-with a forward-only cursor. A binary search per codepoint would be O(n),
-because Gleam lists cannot be indexed: `list.at` walks from the front. Reading
-text in order means the cursor only moves forward, which makes classification
-amortised O(1) per codepoint.
+`category_list` classifies codepoints in input order, one after another. Each
+lookup calls `seek`, which scans the sorted range table from the head and stops
+at the first range whose `hi` is at least the codepoint, so the cost grows with
+the number of ranges before it. The carried `index` does not skip that prefix;
+it is passed through and returned unchanged. With 2,716 ranges the table is
+short enough that this is acceptable.
 
 ## Why every list is built by accumulating and reversing
 

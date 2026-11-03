@@ -7,7 +7,7 @@ module a user needs to import.
 |---|---|
 | `tokfit` | `tokenizer`, `count`, `encode`, `trim_to_budget`, `encoding_name`, `Tokenizer`, `Trimmed`. The public API. |
 | `tokfit/cli` | The `count`, `trim`, and `encode` commands. Emits JSON. |
-| `tokfit/bench` | Throughput measurement. |
+| `tokfit/bench` | A fixed workload that prints its input size and token count, for timing from the shell. |
 | `tokfit/internal/*` | Not API. Hidden from generated docs by `internal_modules` in `gleam.toml`. |
 
 See `tokfit/README.md` and `tokfit/internal/README.md` for detail.
