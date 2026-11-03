@@ -121,6 +121,21 @@ pub fn trim_only_drops_from_the_end_test() {
   let assert 1 = trimmed.tokens
 }
 
+pub fn trim_keeps_a_prefix_that_ends_where_branch_one_backtracks_test() {
+  let tokenizer = tokfit.tokenizer()
+  let trimmed = tokfit.trim_to_budget(tokenizer, "日本語ABC", 2)
+  let assert "日本語" = trimmed.text
+  let assert 2 = trimmed.tokens
+  let assert 3 = trimmed.characters
+  let assert 1 = trimmed.dropped_pieces
+  let whole = tokfit.trim_to_budget(tokenizer, "日本語ABC", 3)
+  let assert "日本語ABC" = whole.text
+  let assert 3 = whole.tokens
+  let mixed = tokfit.trim_to_budget(tokenizer, "AアB", 2)
+  let assert "Aア" = mixed.text
+  let assert 2 = mixed.tokens
+}
+
 pub fn encoding_name_is_o200k_test() {
   let assert "o200k_base" = tokfit.encoding_name()
 }

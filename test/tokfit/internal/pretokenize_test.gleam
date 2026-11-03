@@ -68,6 +68,20 @@ pub fn split_lets_a_leading_combining_mark_join_the_upperish_run_test() {
   let assert ["\u{0301}", "\"a"] = pretokenize.split("\u{0301}\"a")
 }
 
+pub fn split_backtracks_the_upperish_run_to_reach_a_lowering_char_test() {
+  // Branch 1 is ordered, not longest-match: `upperish*` gives back the
+  // trailing Lu/Lt run so `lowering+` can match the last lowering char.
+  let assert ["日本語", "ABC"] = pretokenize.split("日本語ABC")
+  let assert ["Aア", "B"] = pretokenize.split("AアB")
+  let assert ["\u{0301}", "A"] = pretokenize.split("\u{0301}A")
+  let assert ["日本語", "AB"] = pretokenize.split("日本語AB")
+  let assert ["日本語Ab", "C"] = pretokenize.split("日本語AbC")
+  // Nothing to give back when `lowering+` already matches, and branch 1 cannot
+  // match at all when all of the run is Lu/Lt.
+  let assert ["日本語hello"] = pretokenize.split("日本語hello")
+  let assert ["ABC日本語"] = pretokenize.split("ABC日本語")
+}
+
 pub fn split_groups_digits_in_threes_test() {
   let assert ["123", "456", "789", "0"] = pretokenize.split("1234567890")
 }
