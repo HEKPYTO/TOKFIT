@@ -136,6 +136,45 @@ pub fn trim_keeps_a_prefix_that_ends_where_branch_one_backtracks_test() {
   let assert 2 = mixed.tokens
 }
 
+pub fn trim_counts_merged_pieces_exactly_test() {
+  let tokenizer = tokfit.tokenizer()
+  // The two leading spaces are separate pre-tokens but merge into one token,
+  // so the summed piece cost overstates what the prefix actually costs.
+  let assert tokfit.Trimmed("  ", 1, 2, 1) =
+    tokfit.trim_to_budget(tokenizer, "  123", 1)
+  let assert tokfit.Trimmed("  ", 1, 2, 1) =
+    tokfit.trim_to_budget(tokenizer, "  123", 2)
+  let assert tokfit.Trimmed("  123", 3, 5, 0) =
+    tokfit.trim_to_budget(tokenizer, "  123", 3)
+}
+
+pub fn trim_keeps_long_s_contractions_whole_test() {
+  let tokenizer = tokfit.tokenizer()
+  // `a'ſ` is one pre-token of three tokens, so no budget below three can take
+  // any of it, and the trim cannot fall back to the bare `a`.
+  list.each([1, 2], fn(budget) {
+    let assert tokfit.Trimmed("", 0, 0, 1) =
+      tokfit.trim_to_budget(tokenizer, "a'ſ", budget)
+  })
+  let assert tokfit.Trimmed("a'ſ", 3, 3, 0) =
+    tokfit.trim_to_budget(tokenizer, "a'ſ", 3)
+}
+
+pub fn trim_is_self_consistent_test() {
+  let tokenizer = tokfit.tokenizer()
+  let texts = [
+    "  123", "a'ſ", "hello world", "  a  b  ", "日本語ABC", "a\n\nb", "  ",
+  ]
+  list.each(texts, fn(text) {
+    list.each([0, 1, 2, 3, 4, 5, 6, 7, 8], fn(budget) {
+      let trimmed = tokfit.trim_to_budget(tokenizer, text, budget)
+      let assert True = trimmed.tokens == tokfit.count(tokenizer, trimmed.text)
+      let assert True = trimmed.tokens <= budget
+      let assert True = string.starts_with(text, trimmed.text)
+    })
+  })
+}
+
 pub fn encoding_name_is_o200k_test() {
   let assert "o200k_base" = tokfit.encoding_name()
 }

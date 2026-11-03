@@ -22,10 +22,11 @@ Special tokens are not recognised. `<|endoftext|>` tokenizes as ordinary text,
 matching what OpenAI calls `encode_ordinary`.
 
 `trim_to_budget` never cuts inside a pre-token, so its `tokens` always equals
-`count` of its `text`. The first pre-token that does not fit ends the prefix,
-so a leading piece larger than the budget gives an empty string and the result
-can sit well under budget. Both are deliberate: a prefix whose token count is
-not the sum of its parts would be worse than no prefix at all.
+`count` of its `text`. Adjacent pre-tokens can merge into fewer tokens than
+their parts, so a piece is kept only while the exact count of the joined prefix
+fits. The first pre-token that would exceed the budget ends the prefix, so a
+leading piece larger than the budget gives an empty string and the result can
+sit well under budget.
 
 ## Why there is a handle
 

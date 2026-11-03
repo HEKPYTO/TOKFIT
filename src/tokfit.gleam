@@ -70,11 +70,12 @@ pub fn encode(tokenizer: Tokenizer, text: String) -> List(Int) {
 /// The longest prefix of `text` whose token count is at most `budget`.
 ///
 /// Cuts happen at pre-token boundaries and never inside one, so the `tokens` of
-/// a result always equal `count` of that result's `text`. The cost of that
-/// guarantee is that the result can sit well under budget: the first pre-token
-/// that does not fit stops the trim, so a leading pre-token larger than the
-/// whole budget yields the empty string. A budget of zero or less always yields
-/// an empty result.
+/// a result always equal `count` of that result's `text`. A pre-token is taken
+/// when its summed cost fits and the joined prefix still fits exactly, so the
+/// result can sit under budget but never over: the first pre-token whose
+/// addition would exceed the budget stops the trim, and a leading pre-token
+/// larger than the whole budget yields the empty string. A budget of zero or
+/// less always yields an empty result.
 pub fn trim_to_budget(
   tokenizer: Tokenizer,
   text: String,
@@ -92,21 +93,36 @@ fn take(
   kept: List(String),
 ) -> Trimmed {
   case pieces {
-    [] -> finish(kept, used, dropped)
+    [] -> finish(tokenizer, kept, dropped)
     [piece, ..rest] -> {
       let cost = bpe.piece_token_count(tokenizer.ranks, piece)
       case used + cost <= budget {
         True ->
           take(rest, tokenizer, budget, used + cost, dropped, [piece, ..kept])
-        // Dropping this piece and continuing would join later pieces onto an
-        // earlier prefix, so the result would no longer be a prefix at all.
-        False -> finish(kept, used, dropped + 1 + list.length(rest))
+        False -> {
+          // Pieces can merge into one token once concatenated, so their summed
+          // cost is only an upper bound on the exact count of the prefix.
+          // Recount the joined prefix before giving up on this piece.
+          let candidate = [piece, ..kept]
+          let exact = count(tokenizer, joined(candidate))
+          case exact <= budget {
+            True -> take(rest, tokenizer, budget, exact, dropped, candidate)
+            // Dropping this piece and continuing would join later pieces onto
+            // an earlier prefix, so the result would no longer be a prefix at
+            // all.
+            False -> finish(tokenizer, kept, dropped + 1 + list.length(rest))
+          }
+        }
       }
     }
   }
 }
 
-fn finish(kept: List(String), used: Int, dropped: Int) -> Trimmed {
-  let text = string.join(list.reverse(kept), "")
-  Trimmed(text, used, string.length(text), dropped)
+fn finish(tokenizer: Tokenizer, kept: List(String), dropped: Int) -> Trimmed {
+  let text = joined(kept)
+  Trimmed(text, count(tokenizer, text), string.length(text), dropped)
+}
+
+fn joined(kept: List(String)) -> String {
+  string.join(list.reverse(kept), "")
 }
