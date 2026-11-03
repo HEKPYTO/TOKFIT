@@ -105,10 +105,16 @@ fn is_symbol_char(char: Char) -> Bool {
   !is_space_char(char) && !is_letter(char.category) && !is_number_char(char)
 }
 
-/// `[^\r\n\p{L}\p{N}]`. Note this **does** include whitespace other than a
-/// newline, which is why `" world"` is a single pre-token.
+/// `[^\r\n\p{L}\p{N}]`, minus the upperish class. A mark may be the optional
+/// character, but the regex backtracks so the mark matches the upperish run
+/// instead, which makes leaving marks to the run alone equivalent. Note this
+/// **does** include whitespace other than a newline, which is why `" world"` is
+/// a single pre-token.
 fn is_leading_punct_char(char: Char) -> Bool {
-  !is_newline_char(char) && !is_letter(char.category) && !is_number_char(char)
+  !is_newline_char(char)
+  && !is_letter(char.category)
+  && !is_number_char(char)
+  && !is_upperish(char.category)
 }
 
 /// Take characters while `predicate` holds. Returns what was taken and what is
@@ -163,12 +169,19 @@ fn lower_ascii(codepoint: Int) -> Int {
 /// The apostrophe is inside the group, so `"'ll"` is three characters, not two.
 /// Skipping it is the difference between one pre-token for `"don't"` and two,
 /// and the real vocabulary settles that: `don't` is a single `o200k_base`
-/// token, and a BPE token can never span a pre-token boundary.
+/// token, and a BPE token can never span a pre-token boundary. The group is
+/// optional, so a bare apostrophe is not consumed at all.
 fn contraction_length(chars: List(Char)) -> Int {
   case chars {
     [quote, ..rest] ->
       case quote.codepoint == 0x27 {
-        True -> 1 + suffix_length(rest)
+        True -> {
+          let suffix = suffix_length(rest)
+          case suffix {
+            0 -> 0
+            _ -> 1 + suffix
+          }
+        }
         False -> 0
       }
     [] -> 0

@@ -55,6 +55,19 @@ pub fn split_keeps_english_contractions_attached_test() {
   let assert ["YOU'LL"] = pretokenize.split("YOU'LL")
 }
 
+pub fn split_does_not_take_a_bare_apostrophe_into_the_word_test() {
+  // The contraction group is optional, so an apostrophe with no suffix is not
+  // part of the word: it starts the next piece under branch 4.
+  let assert ["a", "'x"] = pretokenize.split("a'x")
+  let assert ["a", "'"] = pretokenize.split("a'")
+}
+
+pub fn split_lets_a_leading_combining_mark_join_the_upperish_run_test() {
+  // The mark is not the optional punctuation; it matches branch 2's upperish
+  // run instead, so it stays with the letter that follows.
+  let assert ["\u{0301}", "\"a"] = pretokenize.split("\u{0301}\"a")
+}
+
 pub fn split_groups_digits_in_threes_test() {
   let assert ["123", "456", "789", "0"] = pretokenize.split("1234567890")
 }

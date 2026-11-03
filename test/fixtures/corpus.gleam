@@ -126,4 +126,9 @@ pub const cases: List(CorpusCase) = [
     text: "\u{41f}\u{440}\u{438}\u{432}\u{435}\u{442}\u{2c}\u{20}\u{43c}\u{438}\u{440}",
     tokens: 4,
   ),
+  CorpusCase(text: "\u{61}\u{27}\u{78}", tokens: 2),
+  CorpusCase(text: "\u{43}\u{27}\u{7d}", tokens: 2),
+  CorpusCase(text: "\u{61}\u{27}\n", tokens: 2),
+  CorpusCase(text: "\u{301}\"\u{61}", tokens: 2),
+  CorpusCase(text: "\u{301}\u{27}\u{73}", tokens: 2),
 ]
