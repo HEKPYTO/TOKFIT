@@ -84,20 +84,25 @@ def main() -> int:
     encoding = tiktoken.get_encoding("o200k_base")
     lines = [
         "//// GENERATED FILE. DO NOT EDIT.",
-        "//// Expected token counts from OpenAI tiktoken's o200k_base encoding.",
+        "//// Expected token ids from OpenAI tiktoken's o200k_base encoding.",
         "//// Regenerate with: python3 scripts/gen_corpus.py",
         "",
-        "/// One input and the token count real tiktoken gives it.",
+        "/// One input, and the token ids and count real tiktoken gives it.",
         "pub type CorpusCase {",
-        "  CorpusCase(text: String, tokens: Int)",
+        "  CorpusCase(text: String, tokens: Int, ids: List(Int))",
         "}",
         "",
-        "/// The corpus. Any mismatch against `tokfit.count` stops the project.",
+        "/// The corpus. Any mismatch against `tokfit.encode` or `tokfit.count`",
+        "/// stops the project.",
         "pub const cases: List(CorpusCase) = [",
     ]
     for text in CASES:
-        count = len(encoding.encode_ordinary(text))
-        lines.append(f"  CorpusCase(text: {gleam_string(text)}, tokens: {count}),")
+        ids = encoding.encode_ordinary(text)
+        rendered = ", ".join(str(id) for id in ids)
+        lines.append(
+            f"  CorpusCase(text: {gleam_string(text)}, tokens: {len(ids)},"
+            f" ids: [{rendered}]),"
+        )
     lines.append("]")
     Path(TARGET).parent.mkdir(parents=True, exist_ok=True)
     with open(TARGET, "w") as handle:

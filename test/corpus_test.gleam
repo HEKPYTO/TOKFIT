@@ -16,15 +16,29 @@ pub fn corpus_matches_oracle_exactly_test() {
   let assert [] = mismatches(tokenizer)
 }
 
-/// Every case that disagrees, as `#(text, expected, actual)`, so a failure
-/// names the input rather than stopping at the first one.
-fn mismatches(tokenizer: tokfit.Tokenizer) -> List(#(String, Int, Int)) {
+/// One input whose count or ids disagree with the oracle, naming the expected
+/// value before the actual one.
+pub type Mismatch {
+  Mismatch(text: String, count: #(Int, Int), ids: #(List(Int), List(Int)))
+}
+
+/// Every case that disagrees, so a failure shows all of them and both the
+/// count and the ids rather than stopping at the first.
+fn mismatches(tokenizer: tokfit.Tokenizer) -> List(Mismatch) {
   list.fold(corpus.cases, [], fn(kept, entry) {
-    let corpus.CorpusCase(text: text, tokens: expected) = entry
-    let actual = tokfit.count(tokenizer, text)
-    case actual == expected {
+    let corpus.CorpusCase(text: text, tokens: expected_count, ids: expected_ids) =
+      entry
+    let actual_count = tokfit.count(tokenizer, text)
+    let actual_ids = tokfit.encode(tokenizer, text)
+    case actual_count == expected_count && actual_ids == expected_ids {
       True -> kept
-      False -> [#(text, expected, actual), ..kept]
+      False -> [
+        Mismatch(text: text, count: #(expected_count, actual_count), ids: #(
+          expected_ids,
+          actual_ids,
+        )),
+        ..kept
+      ]
     }
   })
 }
