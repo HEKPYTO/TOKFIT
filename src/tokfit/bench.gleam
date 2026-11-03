@@ -1,11 +1,11 @@
-//// Throughput measurement.
+//// A fixed workload for external timing.
 ////
 ////     time gleam run -m tokfit/bench
 ////
 //// Not a test. `gleam_stdlib` 1.0.5 exposes no clock, so the timing is done
-//// by the shell. This prints the two numbers worth diffing: the input size and
-//// the token count. Divide the first by the wall clock to get bytes per
-//// second.
+//// by the shell. This prints the input size and the token count; the wall
+//// clock covers the one-off vocabulary load plus the tokenizing, and no CLI
+//// path loads without tokenizing, so the two cannot be split from outside.
 ////
 //// The vocabulary is loaded once and reused, which is the point: the same run
 //// with a fresh handle per pass would measure the 199,998-entry parse instead
@@ -27,6 +27,7 @@ const samples = [
   "{\"json\": [true, false, null]}",
 ]
 
+/// Load the vocabulary, build the fixed input, and print its size and count.
 pub fn main() -> Nil {
   let tokenizer = tokfit.tokenizer()
   let input = string.repeat(string.join(samples, "\n"), passes)

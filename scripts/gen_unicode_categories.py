@@ -58,9 +58,10 @@ HEADER = '''//// GENERATED FILE. DO NOT EDIT.
 //// Regenerate with: python3 scripts/gen_unicode_categories.py
 ////
 //// A sorted, non-overlapping range table, interleaved as lo, hi, class index.
-//// The hot path is `category_list`, which walks a whole list of codepoints
-//// with a forward-only cursor. A binary search per codepoint would be O(n),
-//// because Gleam lists cannot be indexed.
+//// The hot path is `category_list`, which classifies codepoints in input
+//// order. Each lookup scans the table from the head, so its cost grows with
+//// the number of ranges before the codepoint; with 2,716 ranges that is small
+//// enough to accept.
 
 import gleam/list
 
@@ -92,8 +93,10 @@ pub fn category(codepoint: Int) -> Category {{
 
 /// The categories of `codepoints`, in the same order and of the same length.
 ///
-/// One forward pass. Codepoints are expected in non-decreasing order, which
-/// is how the pre-tokenizer reads text, so the cursor never moves backwards.
+/// Codepoints are classified in input order, which is how the pre-tokenizer
+/// reads text. Each lookup scans the sorted range table from the head, so its
+/// cost grows with the number of ranges before the codepoint; with 2,716
+/// ranges that is small enough to accept.
 pub fn category_list(codepoints: List(Int)) -> List(Category) {{
   walk(codepoints, ranges, 0, [])
   |> list.reverse()
@@ -119,8 +122,8 @@ fn walk(
 
 /// Advance to the first range whose `hi` is at least `target`.
 ///
-/// Returns that range's class index, or -1 when no range covers `target`,
-/// together with the cursor position to use next.
+/// Returns that range's class index, or -1 when no range covers `target`.
+/// The second element is the caller's `index`, returned unchanged.
 fn seek(table: List(Int), index: Int, target: Int) -> #(Int, Int) {{
   case table {{
     [lo, hi, class, ..rest] ->
