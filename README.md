@@ -16,7 +16,7 @@ what is the largest prefix of it that fits the budget I was given?
 - Pure Gleam. No NIFs, no FFI, no runtime downloads, no filesystem access.
 - Byte-exact. Counts and token ids match OpenAI's `tiktoken` on ASCII and on
   CJK, Thai, Arabic, Hebrew, Devanagari, emoji, and combining marks, across a
-  35-case committed corpus. The fixture pins both the count and the full id
+  37-case committed corpus. The fixture pins both the count and the full id
   list for every case.
 - Two runtimes. The same code and the same numbers on Erlang and on Node.
 
@@ -108,4 +108,5 @@ tokenizer is built), so the two costs cannot be separated from outside.
 
 ## Licence
 
-Apache-2.0.
+Apache-2.0. The Unicode tables and the OpenAI vocabulary carry their own
+notices, collected in `LICENSE`.
