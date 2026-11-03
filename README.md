@@ -1,7 +1,7 @@
 # tokfit
 
 [![CI](https://github.com/HEKPYTO/TOKFIT/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HEKPYTO/TOKFIT/actions/workflows/ci.yml)
-[![Hex](https://img.shields.io/hex/v/tokfit.svg)](https://hex.pm/packages/tokfit)
+[![Hex](https://img.shields.io/hexpm/v/tokfit.svg)](https://hex.pm/packages/tokfit)
 [![HexDocs](https://img.shields.io/badge/hexdocs-tokfit-blue.svg)](https://tokfit.hexdocs.pm/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
