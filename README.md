@@ -60,11 +60,11 @@ dominates the first call, so a fresh one per call pays that every call.
 grapheme clusters, and `dropped_pieces`.
 
 `trim_to_budget` cuts at pre-token boundaries and never inside one, so its
-`tokens` always equals `count` of its `text`. The first pre-token that does not
-fit ends the prefix, so a leading piece larger than the budget yields an empty
-string, and the result can sit well under budget. Both are deliberate: a prefix
-whose token count is not the sum of its parts would be worse than no prefix at
-all.
+`tokens` always equals `count` of its `text`. Adjacent pre-tokens can merge into
+fewer tokens than their parts, so a piece is kept only while the exact count of
+the joined prefix fits. The first pre-token that would exceed the budget ends
+the prefix: a leading piece larger than the whole budget yields an empty string,
+and the result can sit well under budget.
 
 Special tokens are not recognised. `<|endoftext|>` tokenizes as ordinary text,
 matching what OpenAI calls `encode_ordinary`.

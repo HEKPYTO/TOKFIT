@@ -55,6 +55,14 @@ pub fn split_keeps_english_contractions_attached_test() {
   let assert ["YOU'LL"] = pretokenize.split("YOU'LL")
 }
 
+pub fn split_folds_long_s_into_a_contraction_suffix_test() {
+  // U+017F LATIN SMALL LETTER LONG S simple-case-folds to `s`, so `(?i:'s)`
+  // matches it and the whole group stays in the word.
+  let assert ["a'ſ"] = pretokenize.split("a'ſ")
+  let assert ["A'ſ"] = pretokenize.split("A'ſ")
+  let assert ["a'ſ", "x"] = pretokenize.split("a'ſx")
+}
+
 pub fn split_does_not_take_a_bare_apostrophe_into_the_word_test() {
   // The contraction group is optional, so an apostrophe with no suffix is not
   // part of the word: it starts the next piece under branch 4.

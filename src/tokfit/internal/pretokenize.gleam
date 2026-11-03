@@ -164,7 +164,13 @@ fn take_optional_leading_punct(chars: List(Char)) -> #(List(Char), List(Char)) {
 fn lower_ascii(codepoint: Int) -> Int {
   case codepoint >= 0x41 && codepoint <= 0x5A {
     True -> codepoint + 0x20
-    False -> codepoint
+    False ->
+      case codepoint {
+        // U+017F LATIN SMALL LETTER LONG S simple-case-folds to `s`, so the
+        // case-insensitive contraction group accepts it as a suffix.
+        0x17F -> 0x73
+        _ -> codepoint
+      }
   }
 }
 

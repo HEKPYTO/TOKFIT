@@ -59,6 +59,10 @@ CASES = [
     # it belongs to the upperish run, so it stays attached to what follows.
     "\u0301\"a",
     "\u0301's",
+    # U+017F LATIN SMALL LETTER LONG S simple-case-folds to `s`, so the
+    # contraction group takes it.
+    "a'\u017f",
+    "A'\u017f",
 ]
 
 ESCAPES = {
