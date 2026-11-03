@@ -1,15 +1,15 @@
 //// The `o200k_base` pre-tokenizer.
 ////
-//// OpenAI's pattern is a flat alternation of seven branches with no
-//// backtracking, so it is written out here as explicit matchers over Unicode
-//// general categories. There is no pure-Gleam regex engine on Hex, and the
-//// `cl100k_base` variant uses possessive quantifiers that neither
-//// ECMAScript nor PCRE provides, so a pattern hand-off would be
-//// encoding-specific in two places instead of one.
+//// OpenAI's pattern is a flat alternation of seven branches, so it is written
+//// out here as explicit matchers over Unicode general categories. There is no
+//// pure-Gleam regex engine on Hex, and the `cl100k_base` variant uses
+//// possessive quantifiers that neither ECMAScript nor PCRE provides, so a
+//// pattern hand-off would be encoding-specific in two places instead of one.
 ////
-//// Every branch is a deterministic scan, so no backtracking is needed. Three
-//// places where the obvious reading is wrong, all pinned by the tests:
+//// Four places where the obvious reading is wrong, all pinned by the tests:
 ////
+//// - Branch 1 is ordered, not longest-match: when `lowering+` is empty it
+////   gives back the trailing `Lu`/`Lt` run so a lowering char can satisfy it.
 //// - Branch 4's optional character is a literal space, not `\s`.
 //// - Branch 5's greedy `\s*` backtracks, so the match ends at the last
 ////   newline of the whitespace run, not at the end of the run.
@@ -73,6 +73,11 @@ pub fn is_lowering(category: u.Category) -> Bool {
     u.Number -> False
     u.Other -> False
   }
+}
+
+/// `\p{Lu}` or `\p{Lt}`: upperish but not lowering.
+fn is_upper_only(category: u.Category) -> Bool {
+  is_upperish(category) && !is_lowering(category)
 }
 
 fn is_number_char(char: Char) -> Bool {
@@ -222,29 +227,57 @@ fn with_contraction(body: List(Char), rest: List(Char)) -> #(List(Char), Int) {
 /// Branches 1 and 2 as one matcher.
 ///
 /// Branch 1 is `upperish* lowering+ contraction?` and branch 2 is
-/// `upperish+ lowering* contraction?`. Since the match must be leftmost and
-/// branch 1 is tried first, and since a greedy `upperish*` can only give
-/// characters back to a `lowering` run that starts on a codepoint in both
-/// sets, which adds exactly as many characters as it gives back, the two
-/// collapse into one rule: take the longest upperish run, then the longest
-/// lowering run. Branch 1 is what fired exactly when a lowering run was found.
+/// `upperish+ lowering* contraction?`, tried in that order. The greedy
+/// `upperish*` takes the whole upperish run. If the character after it is not
+/// lowering, `lowering+` is empty and the engine gives characters back from the
+/// end of the run until one is lowering-capable, which is exactly the trailing
+/// `Lu`/`Lt` run. The match is then the run without that tail, and no
+/// contraction follows because the next character is a letter. When the whole
+/// run is `Lu`/`Lt`, branch 1 cannot match at all and branch 2 takes it.
 fn branch_letter_run(chars: List(Char)) -> #(List(Char), Int) {
   let #(optional, rest) = take_optional_leading_punct(chars)
   let #(upper, after_upper) = take_while(rest, is_upperish_char)
   let #(lower, after_lower) = take_while(after_upper, is_lowering_char)
   case lower {
-    [] ->
-      case upper {
-        // Both branches need at least one letter, so the optional punctuation
-        // is given back rather than emitted as a piece of its own.
-        [] -> #([], 0)
-        _ -> with_contraction(list.append(optional, upper), after_upper)
+    [] -> {
+      let run = list.length(upper)
+      let tail = upper_only_tail_length(upper)
+      case tail == 0 || tail == run {
+        True ->
+          case upper {
+            // Both branches need at least one letter, so the optional
+            // punctuation is given back rather than emitted as a piece of its
+            // own.
+            [] -> #([], 0)
+            _ -> with_contraction(list.append(optional, upper), after_upper)
+          }
+        False -> {
+          let taken = list.append(optional, list.take(upper, run - tail))
+          #(taken, list.length(taken))
+        }
       }
+    }
     _ ->
       with_contraction(
         list.append(optional, list.append(upper, lower)),
         after_lower,
       )
+  }
+}
+
+/// The length of the trailing run of `Lu`/`Lt` characters.
+fn upper_only_tail_length(chars: List(Char)) -> Int {
+  upper_only_tail_length_from(chars, 0)
+}
+
+fn upper_only_tail_length_from(chars: List(Char), run: Int) -> Int {
+  case chars {
+    [char, ..rest] ->
+      case is_upper_only(char.category) {
+        True -> upper_only_tail_length_from(rest, run + 1)
+        False -> upper_only_tail_length_from(rest, 0)
+      }
+    [] -> run
   }
 }
 
