@@ -1,0 +1,42 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: HEXPM_API_KEY
+    steps:
+      - uses: actions/checkout@v7
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: "27"
+          gleam-version: "1.18.1"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify tag matches gleam.toml version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' gleam.toml)
+          test "v$version" = "$GITHUB_REF_NAME"
+      - name: Test on erlang
+        run: gleam test --target erlang
+      - name: Test on javascript
+        run: gleam test --target javascript
+      - name: Build docs
+        run: gleam docs build
+      - name: Publish to Hex
+        env:
+          HEXPM_API_KEY: ${{ secrets.HEXPM_API_KEY }}
+        run: gleam publish --yes
