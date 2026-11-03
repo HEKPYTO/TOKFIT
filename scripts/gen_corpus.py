@@ -50,6 +50,15 @@ CASES = [
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     "line one\nline two\nline three\nline four\nline five",
     "Привет, мир",
+    # An apostrophe with no contraction suffix is not part of the word: the
+    # group is optional, so it must not be consumed on its own.
+    "a'x",
+    "C'}",
+    "a'\n",
+    # A leading combining mark is not the optional character of branch 1 or 2;
+    # it belongs to the upperish run, so it stays attached to what follows.
+    "\u0301\"a",
+    "\u0301's",
 ]
 
 ESCAPES = {
