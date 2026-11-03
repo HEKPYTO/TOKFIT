@@ -39,4 +39,5 @@ jobs:
       - name: Publish to Hex
         env:
           HEXPM_API_KEY: ${{ secrets.HEXPM_API_KEY }}
-        run: gleam publish --yes
+        # gleam publish blocks on the 0.x semver prompt even with --yes; feed the phrase it waits for
+        run: printf '%s\n' 'I am not using semantic versioning' | gleam publish --yes
